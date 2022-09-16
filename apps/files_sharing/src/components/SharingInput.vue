@@ -195,6 +195,7 @@ export default {
 				this.SHARE_TYPES.SHARE_TYPE_ROOM,
 				this.SHARE_TYPES.SHARE_TYPE_GUEST,
 				this.SHARE_TYPES.SHARE_TYPE_DECK,
+				25,
 			]
 
 			if (OC.getCapabilities().files_sharing.public.enabled === true) {
@@ -395,6 +396,8 @@ export default {
 			case this.SHARE_TYPES.SHARE_TYPE_REMOTE_GROUP:
 			case this.SHARE_TYPES.SHARE_TYPE_GROUP:
 				return 'icon-group'
+			case 25:
+				return 'icon-virt-org'
 			case this.SHARE_TYPES.SHARE_TYPE_EMAIL:
 				return 'icon-mail'
 			case this.SHARE_TYPES.SHARE_TYPE_CIRCLE:
@@ -421,6 +424,7 @@ export default {
 				subtitle = result.shareWithDisplayNameUnique ?? ''
 			} else if ((result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_REMOTE
 					|| result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_REMOTE_GROUP
+					|| result.value.shareType === 25
 			) && result.value.server) {
 				subtitle = t('files_sharing', 'on {server}', { server: result.value.server })
 			} else if (result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_EMAIL) {

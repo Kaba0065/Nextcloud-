@@ -144,7 +144,8 @@ class ProviderFactory implements IProviderFactory {
 				$this->serverContainer->getJobList(),
 				\OC::$server->getCloudFederationProviderManager(),
 				\OC::$server->getCloudFederationFactory(),
-				$this->serverContainer->query(IEventDispatcher::class)
+				$this->serverContainer->query(IEventDispatcher::class),
+				$this->serverContainer->query(\OCA\Federation\TrustedServers::class)
 			);
 			$tokenHandler = new TokenHandler(
 				$this->serverContainer->getSecureRandom()
@@ -331,7 +332,7 @@ class ProviderFactory implements IProviderFactory {
 			$shareType === IShare::TYPE_LINK
 		) {
 			$provider = $this->defaultShareProvider();
-		} elseif ($shareType === IShare::TYPE_REMOTE || $shareType === IShare::TYPE_REMOTE_GROUP) {
+		} elseif ($shareType === IShare::TYPE_REMOTE || $shareType === IShare::TYPE_REMOTE_GROUP || $shareType === IShare::TYPE_VIRT_ORG) {
 			$provider = $this->federatedShareProvider();
 		} elseif ($shareType === IShare::TYPE_EMAIL) {
 			$provider = $this->getShareByMailProvider();

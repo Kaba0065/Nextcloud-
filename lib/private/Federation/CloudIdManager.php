@@ -39,8 +39,9 @@ use OCP\Federation\ICloudIdManager;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IURLGenerator;
-use OCP\IUserManager;
 use OCP\User\Events\UserChangedEvent;
+use OCP\IUserManager;
+use OCP\IGroupManager;
 
 class CloudIdManager implements ICloudIdManager {
 	/** @var IManager */
@@ -49,6 +50,8 @@ class CloudIdManager implements ICloudIdManager {
 	private $urlGenerator;
 	/** @var IUserManager */
 	private $userManager;
+	/** @var IGroupManager */
+	private $groupManager;
 	private ICache $memCache;
 	/** @var array[] */
 	private array $cache = [];
@@ -58,12 +61,14 @@ class CloudIdManager implements ICloudIdManager {
 		IURLGenerator $urlGenerator,
 		IUserManager $userManager,
 		ICacheFactory $cacheFactory,
-		IEventDispatcher $eventDispatcher
+		IEventDispatcher $eventDispatcher,
+		IGroupManager $groupManager
 	) {
 		$this->contactsManager = $contactsManager;
 		$this->urlGenerator = $urlGenerator;
 		$this->userManager = $userManager;
 		$this->memCache = $cacheFactory->createDistributed('cloud_id_');
+		$this->groupManager = $groupManager;
 		$eventDispatcher->addListener(UserChangedEvent::class, [$this, 'handleUserEvent']);
 		$eventDispatcher->addListener(CardUpdatedEvent::class, [$this, 'handleCardEvent']);
 	}
@@ -100,6 +105,12 @@ class CloudIdManager implements ICloudIdManager {
 	 */
 	public function resolveCloudId(string $cloudId): ICloudId {
 		// TODO magic here to get the url and user instead of just splitting on @
+
+		if (strpos( $cloudId , 'urn' ) === 0) {
+			$remote = substr($cloudId, strpos($cloudId, "#") + 1);
+			$displayName = $this->groupManager->get($cloudId)->getDisplayName();
+			return new VirtOrgId($cloudId, $cloudId, $remote, $displayName);
+		}
 
 		if (!$this->isValidCloudId($cloudId)) {
 			throw new \InvalidArgumentException('Invalid cloud id');

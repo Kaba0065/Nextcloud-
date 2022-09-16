@@ -113,6 +113,11 @@ interface IShare {
 	public const TYPE_DECK = 12;
 
 	/**
+	 * @since 26.0.0
+	 */
+	public const TYPE_VIRT_ORG = 25;
+
+	/**
 	 * @internal
 	 * @since 21.0.0
 	 */

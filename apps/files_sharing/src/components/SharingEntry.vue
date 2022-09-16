@@ -183,6 +183,8 @@ export default {
 				title += ` (${t('files_sharing', 'remote group')})`
 			} else if (this.share.type === this.SHARE_TYPES.SHARE_TYPE_GUEST) {
 				title += ` (${t('files_sharing', 'guest')})`
+			} else if (this.share.type === 25) {
+				title += ` (${t('files_sharing', 'VO')})`
 			}
 			return title
 		},

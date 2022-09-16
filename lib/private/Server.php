@@ -74,6 +74,7 @@ use OC\Collaboration\Collaborators\RemoteGroupPlugin;
 use OC\Collaboration\Collaborators\RemotePlugin;
 use OC\Collaboration\Collaborators\UserPlugin;
 use OC\Collaboration\Reference\ReferenceManager;
+use OC\Collaboration\Collaborators\VirtOrgPlugin;
 use OC\Command\CronBus;
 use OC\Comments\ManagerFactory as CommentsManagerFactory;
 use OC\Contacts\ContactsMenu\ActionFactory;
@@ -1320,6 +1321,7 @@ class Server extends ServerContainer implements IServerContainer {
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_EMAIL', 'class' => MailPlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE', 'class' => RemotePlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE_GROUP', 'class' => RemoteGroupPlugin::class]);
+			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_VIRT_ORG', 'class' => VirtOrgPlugin::class]);
 
 			return $instance;
 		});
@@ -1363,6 +1365,7 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->get(IUserManager::class),
 				$c->get(ICacheFactory::class),
 				$c->get(IEventDispatcher::class),
+				$c->get(IGroupManager::class),
 			);
 		});
 

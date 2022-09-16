@@ -36,6 +36,9 @@ use OCP\Federation\ICloudFederationProviderManager;
 use OCP\Http\Client\IClientService;
 use OCP\ILogger;
 use OCP\OCS\IDiscoveryService;
+use OCP\Share\IShare;
+
+use OCA\Federation\TrustedServers;
 
 class Notifications {
 	public const RESPONSE_FORMAT = 'json'; // default response format for ocs calls
@@ -64,6 +67,9 @@ class Notifications {
 	/** @var ILogger */
 	private $logger;
 
+	/** @var  TrustedServers */
+	private $trustedServers;
+
 	public function __construct(
 		AddressHandler $addressHandler,
 		IClientService $httpClientService,
@@ -72,7 +78,8 @@ class Notifications {
 		IJobList $jobList,
 		ICloudFederationProviderManager $federationProviderManager,
 		ICloudFederationFactory $cloudFederationFactory,
-		IEventDispatcher $eventDispatcher
+		IEventDispatcher $eventDispatcher,
+		TrustedServers $trustedServers
 	) {
 		$this->addressHandler = $addressHandler;
 		$this->httpClientService = $httpClientService;
@@ -82,6 +89,7 @@ class Notifications {
 		$this->federationProviderManager = $federationProviderManager;
 		$this->cloudFederationFactory = $cloudFederationFactory;
 		$this->eventDispatcher = $eventDispatcher;
+		$this->trustedServers = $trustedServers;
 	}
 
 	/**
@@ -347,16 +355,29 @@ class Notifications {
 			'result' => '',
 		];
 
-		// if possible we use the new OCM API
-		$ocmResult = $this->tryOCMEndPoint($remoteDomain, $fields, $action);
-		if (is_array($ocmResult)) {
+		if ($fields['shareType'] === IShare::TYPE_VIRT_ORG) {
+			foreach ($this->trustedServers->getServers() as $server) {
+				$ocmResult = $this->tryOCMEndPoint($server['url'], $fields, $action);
+				if (!is_array($ocmResult)) {
+					return $result;
+				}
+			}
 			$result['success'] = true;
 			$result['result'] = json_encode([
 				'ocs' => ['meta' => ['statuscode' => 200]]]);
 			return $result;
-		}
+		} else {
+			// if possible we use the new OCM API
+			$ocmResult = $this->tryOCMEndPoint($remoteDomain, array_merge($fields, ['shareWith' => $fields['shareWith'] . '@' . $remoteDomain]), $action);
+			if (is_array($ocmResult)) {
+				$result['success'] = true;
+				$result['result'] = json_encode([
+					'ocs' => ['meta' => ['statuscode' => 200]]]);
+				return $result;
+			}
 
-		return $this->tryLegacyEndPoint($remoteDomain, $urlSuffix, $fields);
+			return $this->tryLegacyEndPoint($remoteDomain, $urlSuffix, $fields);
+		}
 	}
 
 	/**
@@ -411,7 +432,7 @@ class Notifications {
 		switch ($action) {
 			case 'share':
 				$share = $this->cloudFederationFactory->getCloudFederationShare(
-					$fields['shareWith'] . '@' . $remoteDomain,
+					$fields['shareWith'],
 					$fields['name'],
 					'',
 					$fields['remoteId'],
@@ -423,7 +444,7 @@ class Notifications {
 					$fields['shareType'],
 					'file'
 				);
-				return $this->federationProviderManager->sendShare($share);
+				return $this->federationProviderManager->sendShare($remoteDomain, $share);
 			case 'reshare':
 				// ask owner to reshare a file
 				$notification = $this->cloudFederationFactory->getCloudFederationNotification();

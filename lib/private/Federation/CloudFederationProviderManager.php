@@ -129,9 +129,10 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 		}
 	}
 
-	public function sendShare(ICloudFederationShare $share) {
-		$cloudID = $this->cloudIdManager->resolveCloudId($share->getShareWith());
-		$ocmEndPoint = $this->getOCMEndPoint($cloudID->getRemote());
+	public function sendShare($url, ICloudFederationShare $share) {
+		// $cloudID = $this->cloudIdManager->resolveCloudId($share->getShareWith());
+		// $ocmEndPoint = $this->getOCMEndPoint($cloudID->getRemote());
+		$ocmEndPoint = $this->getOCMEndPoint($url);
 		if (empty($ocmEndPoint)) {
 			return false;
 		}
