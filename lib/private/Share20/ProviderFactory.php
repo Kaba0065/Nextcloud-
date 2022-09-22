@@ -71,6 +71,8 @@ class ProviderFactory implements IProviderFactory {
 	private $circlesAreNotAvailable = false;
 	/** @var \OCA\Talk\Share\RoomShareProvider */
 	private $roomShareProvider = null;
+	/** @var FederatedGroupShareProvider */
+	private $federatedGroupShareProvider = null;	
 
 	private $registeredShareProviders = [];
 
@@ -276,6 +278,84 @@ class ProviderFactory implements IProviderFactory {
 		return $this->roomShareProvider;
 	}
 
+/**
+	 * Create the federated group share provider
+	 *
+	 * @return FederatedGroupShareProvider
+	 */
+	protected function getFederatedGroupShareProvider() {
+
+		if ($this->federatedGroupShareProvider === null) {
+			/*
+			 * Check if the app is enabled
+			 */
+			$appManager = $this->serverContainer->getAppManager();
+			if (!$appManager->isEnabledForUser('vo_federation')) {
+				return null;
+			}
+
+			try {
+				$this->federatedGroupShareProvider = $this->serverContainer->query('\OCA\VO_Federation\FederatedGroupShareProvider');
+			} catch (\OCP\AppFramework\QueryException $e) {
+				return null;
+			}
+		}
+
+		return $this->federatedGroupShareProvider;
+		
+		
+		// if ($this->federatedProvider === null) {
+		// 	/*
+		// 	 * Check if the app is enabled
+		// 	 */
+		// 	$appManager = $this->serverContainer->getAppManager();
+		// 	if (!$appManager->isEnabledForUser('federatedfilesharing')) {
+		// 		return null;
+		// 	}
+
+		// 	/*
+		// 	 * TODO: add factory to federated sharing app
+		// 	 */
+		// 	$l = $this->serverContainer->getL10N('federatedfilesharing');
+		// 	$addressHandler = new AddressHandler(
+		// 		$this->serverContainer->getURLGenerator(),
+		// 		$l,
+		// 		$this->serverContainer->getCloudIdManager()
+		// 	);
+		// 	$notifications = new Notifications(
+		// 		$addressHandler,
+		// 		$this->serverContainer->getHTTPClientService(),
+		// 		$this->serverContainer->query(\OCP\OCS\IDiscoveryService::class),
+		// 		$this->serverContainer->getLogger(),
+		// 		$this->serverContainer->getJobList(),
+		// 		\OC::$server->getCloudFederationProviderManager(),
+		// 		\OC::$server->getCloudFederationFactory(),
+		// 		$this->serverContainer->query(IEventDispatcher::class),
+		// 		$this->serverContainer->query(\OCA\Federation\TrustedServers::class)
+		// 	);
+		// 	$tokenHandler = new TokenHandler(
+		// 		$this->serverContainer->getSecureRandom()
+		// 	);
+
+		// 	$this->federatedProvider = new FederatedShareProvider(
+		// 		$this->serverContainer->getDatabaseConnection(),
+		// 		$addressHandler,
+		// 		$notifications,
+		// 		$tokenHandler,
+		// 		$l,
+		// 		$this->serverContainer->getLogger(),
+		// 		$this->serverContainer->getLazyRootFolder(),
+		// 		$this->serverContainer->getConfig(),
+		// 		$this->serverContainer->getUserManager(),
+		// 		$this->serverContainer->getCloudIdManager(),
+		// 		$this->serverContainer->getGlobalScaleConfig(),
+		// 		$this->serverContainer->getCloudFederationProviderManager()
+		// 	);
+		// }
+
+		// return $this->federatedProvider;
+	}
+
 	/**
 	 * @inheritdoc
 	 */
@@ -332,7 +412,7 @@ class ProviderFactory implements IProviderFactory {
 			$shareType === IShare::TYPE_LINK
 		) {
 			$provider = $this->defaultShareProvider();
-		} elseif ($shareType === IShare::TYPE_REMOTE || $shareType === IShare::TYPE_REMOTE_GROUP || $shareType === IShare::TYPE_VIRT_ORG) {
+		} elseif ($shareType === IShare::TYPE_REMOTE || $shareType === IShare::TYPE_REMOTE_GROUP) {
 			$provider = $this->federatedShareProvider();
 		} elseif ($shareType === IShare::TYPE_EMAIL) {
 			$provider = $this->getShareByMailProvider();
@@ -342,6 +422,8 @@ class ProviderFactory implements IProviderFactory {
 			$provider = $this->getRoomShareProvider();
 		} elseif ($shareType === IShare::TYPE_DECK) {
 			$provider = $this->getProvider('deck');
+		} elseif ($shareType === IShare::TYPE_VIRT_ORG) {
+			$provider = $this->getFederatedGroupShareProvider();
 		}
 
 

@@ -33,6 +33,7 @@ use OCP\Federation\ICloudFederationShare;
 use OCP\Federation\ICloudIdManager;
 use OCP\Http\Client\IClientService;
 use Psr\Log\LoggerInterface;
+use OCP\IServerContainer;
 
 /**
  * Class Manager
@@ -62,6 +63,9 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 
 	private $supportedAPIVersion = '1.0-proposal1';
 
+	/** @var IServerContainer */
+	private $serverContainer;
+
 	/**
 	 * CloudFederationProviderManager constructor.
 	 *
@@ -72,12 +76,14 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	public function __construct(IAppManager $appManager,
 								IClientService $httpClientService,
 								ICloudIdManager $cloudIdManager,
-								LoggerInterface $logger) {
+								LoggerInterface $logger,
+								IServerContainer $serverContainer) {
 		$this->cloudFederationProvider = [];
 		$this->appManager = $appManager;
 		$this->httpClientService = $httpClientService;
 		$this->cloudIdManager = $cloudIdManager;
 		$this->logger = $logger;
+		$this->serverContainer = $serverContainer;
 	}
 
 
@@ -128,6 +134,18 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 			throw new ProviderDoesNotExistsException($resourceType);
 		}
 	}
+
+	public function getCloudFederationProviderForShareType(string $shareType, $resourceType) {
+		if ($shareType === 'federated_group') {
+			try {
+				return $this->serverContainer->query('\OCA\VO_Federation\OCM\CloudGroupFederationProviderFiles');
+			} catch (\OCP\AppFramework\QueryException $e) {
+				return null;
+			}	
+		} else {
+			return $this->getCloudFederationProvider($resourceType);
+		}	
+	}	
 
 	public function sendShare($url, ICloudFederationShare $share) {
 		// $cloudID = $this->cloudIdManager->resolveCloudId($share->getShareWith());

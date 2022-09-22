@@ -188,7 +188,7 @@ class RequestHandlerController extends Controller {
 		}
 
 		try {
-			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			$provider = $this->cloudFederationProviderManager->getCloudFederationProviderForShareType($shareType, $resourceType);
 			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
 			$share->setProtocol($protocol);
 			$provider->shareReceived($share);

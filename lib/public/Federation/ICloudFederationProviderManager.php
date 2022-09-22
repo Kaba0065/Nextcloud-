@@ -74,6 +74,9 @@ interface ICloudFederationProviderManager {
 	 */
 	public function getCloudFederationProvider($resourceType);
 
+	public function getCloudFederationProviderForShareType(string $shareType, $resourceType);
+
+
 	/**
 	 * send federated share
 	 *
