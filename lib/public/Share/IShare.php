@@ -115,7 +115,7 @@ interface IShare {
 	/**
 	 * @since 26.0.0
 	 */
-	public const TYPE_VIRT_ORG = 25;
+	public const TYPE_FEDERATED_GROUP = 25;
 
 	/**
 	 * @internal

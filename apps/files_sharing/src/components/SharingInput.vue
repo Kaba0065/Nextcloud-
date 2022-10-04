@@ -195,7 +195,7 @@ export default {
 				this.SHARE_TYPES.SHARE_TYPE_ROOM,
 				this.SHARE_TYPES.SHARE_TYPE_GUEST,
 				this.SHARE_TYPES.SHARE_TYPE_DECK,
-				25,
+				this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP,
 			]
 
 			if (OC.getCapabilities().files_sharing.public.enabled === true) {
@@ -395,6 +395,7 @@ export default {
 				return 'icon-user'
 			case this.SHARE_TYPES.SHARE_TYPE_REMOTE_GROUP:
 			case this.SHARE_TYPES.SHARE_TYPE_GROUP:
+			case this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP:				
 				return 'icon-group'
 			case 25:
 				return 'icon-virt-org'

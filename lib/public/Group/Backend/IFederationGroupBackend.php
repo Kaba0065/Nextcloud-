@@ -1,10 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
 /**
- * @copyright Copyright (c) 2019 John Molakvoæ <skjnldsv@protonmail.com>
+ * @copyright Copyright (c) 2022 Sandro Mesterheide <sandro.mesterheide@extern.publicplan.de>
  *
- * @author John Molakvoæ <skjnldsv@protonmail.com>
- * @author Julius Härtl <jus@bitgrid.net>
+ * @author Sandro Mesterheide <sandro.mesterheide@extern.publicplan.de>
  *
- * @license AGPL-3.0-or-later
+ * @license GNU AGPL version 3 or any later version
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -13,23 +16,27 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+namespace OCP\Group\Backend;
 
-import { Type as ShareTypes } from '@nextcloud/sharing'
-
-export default {
-	data() {
-		return {
-			SHARE_TYPES: {
-				...ShareTypes,
-				SHARE_TYPE_FEDERATED_GROUP: 25
-			}
-		}
-	},
+/**
+ * @since 26.0.0
+ *
+ * Handles federated groups
+ */
+interface IFederationGroupBackend {
+	/**
+	 * Whether group is a federated group
+	 *
+	 * @param string $groupId
+	 * @return bool
+	 * @since 26.0.0
+	 */
+	public function isFederatedGroup(string $groupId): bool;
 }

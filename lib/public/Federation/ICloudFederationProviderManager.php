@@ -45,6 +45,8 @@ interface ICloudFederationProviderManager {
 	 */
 	public function addCloudFederationProvider($resourceType, $displayName, callable $callback);
 
+	public function addCloudFederationProviderForShareType($providerId, $resourceType, array $supportedShareTypes, $displayName, callable $callback);
+
 	/**
 	 * remove cloud federation provider
 	 *
@@ -74,8 +76,7 @@ interface ICloudFederationProviderManager {
 	 */
 	public function getCloudFederationProvider($resourceType);
 
-	public function getCloudFederationProviderForShareType(string $shareType, $resourceType);
-
+	public function getCloudFederationProviderForFederationShare(ICloudFederationShare $share);	
 
 	/**
 	 * send federated share

@@ -34,6 +34,7 @@
  * @author Thomas Tanghus <thomas@tanghus.net>
  * @author Tobia De Koninck <tobia@ledfan.be>
  * @author Vincent Petry <vincent@nextcloud.com>
+ * @author Sandro Mesterheide <sandro.mesterheide@extern.publicplan.de>
  *
  * @license AGPL-3.0
  *
@@ -68,6 +69,7 @@ use OC\Authentication\Listeners\UserLoggedInListener;
 use OC\Authentication\LoginCredentials\Store;
 use OC\Authentication\Token\IProvider;
 use OC\Avatar\AvatarManager;
+use OC\Collaboration\Collaborators\FederatedGroupPlugin;
 use OC\Collaboration\Collaborators\GroupPlugin;
 use OC\Collaboration\Collaborators\MailPlugin;
 use OC\Collaboration\Collaborators\RemoteGroupPlugin;
@@ -1321,7 +1323,7 @@ class Server extends ServerContainer implements IServerContainer {
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_EMAIL', 'class' => MailPlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE', 'class' => RemotePlugin::class]);
 			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_REMOTE_GROUP', 'class' => RemoteGroupPlugin::class]);
-			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_VIRT_ORG', 'class' => VirtOrgPlugin::class]);
+			$instance->registerPlugin(['shareType' => 'SHARE_TYPE_FEDERATED_GROUP', 'class' => FederatedGroupPlugin::class]);
 
 			return $instance;
 		});

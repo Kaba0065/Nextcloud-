@@ -15,6 +15,7 @@
  * @author Robin Appelman <robin@icewind.nl>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Samuel <faust64@gmail.com>
+ * @author Sandro Mesterheide <sandro.mesterheide@extern.publicplan.de>
  *
  * @license AGPL-3.0
  *
@@ -422,8 +423,8 @@ class ProviderFactory implements IProviderFactory {
 			$provider = $this->getRoomShareProvider();
 		} elseif ($shareType === IShare::TYPE_DECK) {
 			$provider = $this->getProvider('deck');
-		} elseif ($shareType === IShare::TYPE_VIRT_ORG) {
-			$provider = $this->getFederatedGroupShareProvider();
+		} elseif ($shareType === IShare::TYPE_FEDERATED_GROUP) {
+			$provider = $this->getProvider('federated_group');
 		}
 
 

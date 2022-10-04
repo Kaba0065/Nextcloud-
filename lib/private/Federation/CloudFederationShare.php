@@ -207,7 +207,7 @@ class CloudFederationShare implements ICloudFederationShare {
 	public function setShareType($shareType) {
 		if ($shareType === 'group' || $shareType === IShare::TYPE_REMOTE_GROUP) {
 			$this->share['shareType'] = 'group';
-		} else if ($shareType === IShare::TYPE_VIRT_ORG) {
+		} else if ($shareType === 'federated_group' || $shareType === IShare::TYPE_FEDERATED_GROUP) {
 			$this->share['shareType'] = 'federated_group';
 		} else {
 			$this->share['shareType'] = 'user';

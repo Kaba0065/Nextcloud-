@@ -26,6 +26,7 @@ declare(strict_types=1);
  * @author Valdnet <47037905+Valdnet@users.noreply.github.com>
  * @author Vincent Petry <vincent@nextcloud.com>
  * @author waleczny <michal@walczak.xyz>
+ * @author Sandro Mesterheide <sandro.mesterheide@extern.publicplan.de>
  *
  * @license AGPL-3.0
  *
@@ -277,6 +278,11 @@ class ShareAPIController extends OCSController {
 		} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP) {
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $this->getDisplayNameFromAddressBook($share->getSharedWith(), 'CLOUD');
+			$result['token'] = $share->getToken();
+		} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
+			$group = $this->groupManager->get($share->getSharedWith());
+			$result['share_with'] = $share->getSharedWith();
+			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
 			$result['token'] = $share->getToken();
 		} elseif ($share->getShareType() === IShare::TYPE_EMAIL) {
 			$result['share_with'] = $share->getSharedWith();
@@ -648,7 +654,7 @@ class ShareAPIController extends OCSController {
 					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
 				}
 			}
-		} elseif ($shareType === IShare::TYPE_REMOTE_GROUP) {
+		} elseif ($shareType === IShare::TYPE_REMOTE_GROUP || $shareType === IShare::TYPE_FEDERATED_GROUP) {
 			if (!$this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
 				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$node->getPath(), $shareType]));
 			}
@@ -1700,7 +1706,7 @@ class ShareAPIController extends OCSController {
 			IShare::TYPE_CIRCLE,
 			IShare::TYPE_ROOM,
 			IShare::TYPE_DECK,
-			IShare::TYPE_VIRT_ORG
+			IShare::TYPE_FEDERATED_GROUP,
 		];
 
 		// Should we assume that the (currentUser) viewer is the owner of the node !?
@@ -1726,10 +1732,10 @@ class ShareAPIController extends OCSController {
 			$federatedShares = $this->shareManager->getSharesBy(
 				$this->currentUser, IShare::TYPE_REMOTE_GROUP, $node, $reShares, -1, 0
 			);
-			$virtOrgShares = $this->shareManager->getSharesBy(
-				$this->currentUser, IShare::TYPE_VIRT_ORG, $node, $reShares, -1, 0
+			$federatedGroupShares = $this->shareManager->getSharesBy(
+				$this->currentUser, IShare::TYPE_FEDERATED_GROUP, $node, $reShares, -1, 0
 			);
-			$shares = array_merge($shares, $federatedShares, $virtOrgShares);
+			$shares = array_merge($shares, $federatedShares, $federatedGroupShares);
 		}
 
 		return $shares;
@@ -1866,7 +1872,7 @@ class ShareAPIController extends OCSController {
 		}
 		if ($this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
 			$federatedGroupShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE_GROUP, $path, $reshares, -1, 0);
-			$virtOrgShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_VIRT_ORG, $path, $reshares, -1, 0);
+			$virtOrgShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_FEDERATED_GROUP, $path, $reshares, -1, 0);
 			$federatedGroupShares = array_merge($federatedGroupShares, $virtOrgShares);
 		} else {
 			$federatedGroupShares = [];
