@@ -102,7 +102,7 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	 *
 	 * @param string $providerId unique id for removal
 	 * @param string $resourceType which resource type does the provider handles
-	 * @param string $supportedShareTypes which share types does the provider support
+	 * @param array $supportedShareTypes which share types does the provider support
 	 * @param string $displayName user facing name of the federated share provider
 	 * @param callable $callback
 	 */
@@ -164,7 +164,7 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 		$shareType = $share->getShareType();
 		$resourceType = $share->getResourceType();
 
-		foreach ($this->getCloudFederationProvider as $provider) {
+		foreach ($this->cloudFederationProvider as $provider) {
 			if ($provider['resourceType'] === $resourceType &&
 					isset($provider['supportedShareTypes']) &&
 					in_array($shareType, $provider['supportedShareTypes'])) {
