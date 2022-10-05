@@ -33,7 +33,6 @@ use OCP\Federation\ICloudFederationShare;
 use OCP\Federation\ICloudIdManager;
 use OCP\Http\Client\IClientService;
 use Psr\Log\LoggerInterface;
-use OCP\IServerContainer;
 
 /**
  * Class Manager
@@ -63,9 +62,6 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 
 	private $supportedAPIVersion = '1.0-proposal1';
 
-	/** @var IServerContainer */
-	private $serverContainer;
-
 	/**
 	 * CloudFederationProviderManager constructor.
 	 *
@@ -76,14 +72,12 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	public function __construct(IAppManager $appManager,
 								IClientService $httpClientService,
 								ICloudIdManager $cloudIdManager,
-								LoggerInterface $logger,
-								IServerContainer $serverContainer) {
+								LoggerInterface $logger) {
 		$this->cloudFederationProvider = [];
 		$this->appManager = $appManager;
 		$this->httpClientService = $httpClientService;
 		$this->cloudIdManager = $cloudIdManager;
 		$this->logger = $logger;
-		$this->serverContainer = $serverContainer;
 	}
 
 

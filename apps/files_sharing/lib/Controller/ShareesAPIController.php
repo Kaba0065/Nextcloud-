@@ -180,7 +180,6 @@ class ShareesAPIController extends OCSController {
 
 			if ($this->isRemoteGroupSharingAllowed($itemType)) {
 				$shareTypes[] = IShare::TYPE_REMOTE_GROUP;
-				$shareTypes[] = IShare::TYPE_VIRT_ORG;
 			}
 
 			// TODO: more checks

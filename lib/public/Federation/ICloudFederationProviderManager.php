@@ -81,13 +81,12 @@ interface ICloudFederationProviderManager {
 	/**
 	 * send federated share
 	 *
-	 * @param string $url
 	 * @param ICloudFederationShare $share
 	 * @return mixed
 	 *
 	 * @since 14.0.0
 	 */
-	public function sendShare($url, ICloudFederationShare $share);
+	public function sendShare(ICloudFederationShare $share);
 
 	/**
 	 * send notification about existing share

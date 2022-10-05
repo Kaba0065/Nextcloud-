@@ -258,7 +258,7 @@ class ShareAPIController extends OCSController {
 						: null,
 				];
 			}
-		} elseif ($share->getShareType() === IShare::TYPE_GROUP || $share->getShareType() === IShare::TYPE_VIRT_ORG) {
+		} elseif ($share->getShareType() === IShare::TYPE_GROUP) {
 			$group = $this->groupManager->get($share->getSharedWith());
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
@@ -661,21 +661,6 @@ class ShareAPIController extends OCSController {
 
 			if ($shareWith === null) {
 				throw new OCSNotFoundException($this->l->t('Please specify a valid federated group ID'));
-			}
-
-			$share->setSharedWith($shareWith);
-			$share->setPermissions($permissions);
-			if ($expireDate !== '') {
-				try {
-					$expireDate = $this->parseDate($expireDate);
-					$share->setExpirationDate($expireDate);
-				} catch (\Exception $e) {
-					throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
-				}
-			}
-		} elseif ($shareType === IShare::TYPE_VIRT_ORG) {
-			if (!$this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
-				throw new OCSForbiddenException($this->l->t('Sharing %1$s failed because the back end does not allow shares from type %2$s', [$node->getPath(), $shareType]));
 			}
 
 			$share->setSharedWith($shareWith);

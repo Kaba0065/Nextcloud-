@@ -397,8 +397,6 @@ export default {
 			case this.SHARE_TYPES.SHARE_TYPE_GROUP:
 			case this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP:				
 				return 'icon-group'
-			case 25:
-				return 'icon-virt-org'
 			case this.SHARE_TYPES.SHARE_TYPE_EMAIL:
 				return 'icon-mail'
 			case this.SHARE_TYPES.SHARE_TYPE_CIRCLE:
@@ -425,7 +423,6 @@ export default {
 				subtitle = result.shareWithDisplayNameUnique ?? ''
 			} else if ((result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_REMOTE
 					|| result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_REMOTE_GROUP
-					|| result.value.shareType === 25
 			) && result.value.server) {
 				subtitle = t('files_sharing', 'on {server}', { server: result.value.server })
 			} else if (result.value.shareType === this.SHARE_TYPES.SHARE_TYPE_EMAIL) {

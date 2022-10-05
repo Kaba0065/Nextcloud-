@@ -105,7 +105,7 @@ class FederatedShareProvider implements IShareProvider {
 	private $cloudFederationProviderManager;
 
 	/** @var array list of supported share types */
-	private $supportedShareType = [IShare::TYPE_REMOTE_GROUP, IShare::TYPE_REMOTE, IShare::TYPE_CIRCLE, IShare::TYPE_VIRT_ORG];
+	private $supportedShareType = [IShare::TYPE_REMOTE_GROUP, IShare::TYPE_REMOTE, IShare::TYPE_CIRCLE];
 
 	/**
 	 * DefaultShareProvider constructor.
@@ -177,8 +177,7 @@ class FederatedShareProvider implements IShareProvider {
 		$shareType = $share->getShareType();
 		$expirationDate = $share->getExpirationDate();
 
-		if (($shareType === IShare::TYPE_REMOTE_GROUP ||
-				$shareType === IShare::TYPE_VIRT_ORG) &&
+		if ($shareType === IShare::TYPE_REMOTE_GROUP &&
 			!$this->isOutgoingServer2serverGroupShareEnabled()
 		) {
 			$message = 'It is not allowed to send federated group shares from this server.';
@@ -192,8 +191,7 @@ class FederatedShareProvider implements IShareProvider {
 		 */
 		$alreadyShared = $this->getSharedWith($shareWith, IShare::TYPE_REMOTE, $share->getNode(), 1, 0);
 		$alreadySharedGroup = $this->getSharedWith($shareWith, IShare::TYPE_REMOTE_GROUP, $share->getNode(), 1, 0);
-		$alreadySharedVirtOrg = $this->getSharedWith($shareWith, IShare::TYPE_VIRT_ORG, $share->getNode(), 1, 0);
-		if (!empty($alreadyShared) || !empty($alreadySharedGroup) || !empty($alreadySharedVirtOrg)) {
+		if (!empty($alreadyShared) || !empty($alreadySharedGroup)) {
 			$message = 'Sharing %1$s failed, because this item is already shared with %2$s';
 			$message_t = $this->l->t('Sharing %1$s failed, because this item is already shared with user %2$s', [$share->getNode()->getName(), $shareWith]);
 			$this->logger->debug(sprintf($message, $share->getNode()->getName(), $shareWith), ['app' => 'Federated File Sharing']);
@@ -203,16 +201,14 @@ class FederatedShareProvider implements IShareProvider {
 
 		// don't allow federated shares if source and target server are the same
 		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
-
-		// FIXME Sandro Mesterheide
-		// $currentServer = $this->addressHandler->generateRemoteURL();
-		// $currentUser = $sharedBy;
-		// if ($this->addressHandler->compareAddresses($cloudId->getUser(), $cloudId->getRemote(), $currentUser, $currentServer)) {
-		// 	$message = 'Not allowed to create a federated share with the same user.';
-		// 	$message_t = $this->l->t('Not allowed to create a federated share with the same user');
-		// 	$this->logger->debug($message, ['app' => 'Federated File Sharing']);
-		// 	throw new \Exception($message_t);
-		// }
+		$currentServer = $this->addressHandler->generateRemoteURL();
+		$currentUser = $sharedBy;
+		if ($this->addressHandler->compareAddresses($cloudId->getUser(), $cloudId->getRemote(), $currentUser, $currentServer)) {
+			$message = 'Not allowed to create a federated share with the same user.';
+			$message_t = $this->l->t('Not allowed to create a federated share with the same user');
+			$this->logger->debug($message, ['app' => 'Federated File Sharing']);
+			throw new \Exception($message_t);
+		}
 
 		// Federated shares always have read permissions
 		if (($share->getPermissions() & Constants::PERMISSION_READ) === 0) {
