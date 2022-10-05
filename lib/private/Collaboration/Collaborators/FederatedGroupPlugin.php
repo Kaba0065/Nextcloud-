@@ -123,9 +123,9 @@ class FederatedGroupPlugin implements ISearchPlugin {
 					'label' => $group->getDisplayName(),
 					'value' => [
 						'shareType' => IShare::TYPE_FEDERATED_GROUP,
-						'shareWith' => $gid,
-						'shareWithDescription' => $this->getShareWithDescription($group)
+						'shareWith' => $gid
 					],
+					'shareWithDescription' => $this->getShareWithDescription($group)
 				];
 			} else {
 				if ($this->shareeEnumerationInGroupOnly && !in_array($group->getGID(), $userGroups, true)) {
@@ -135,9 +135,9 @@ class FederatedGroupPlugin implements ISearchPlugin {
 					'label' => $group->getDisplayName(),
 					'value' => [
 						'shareType' => IShare::TYPE_FEDERATED_GROUP,
-						'shareWith' => $gid,
-						'shareWithDescription' => $this->getShareWithDescription($group)
+						'shareWith' => $gid						
 					],
+					'shareWithDescription' => $this->getShareWithDescription($group)
 				];
 			}
 		}
@@ -151,9 +151,9 @@ class FederatedGroupPlugin implements ISearchPlugin {
 					'label' => $group->getDisplayName(),
 					'value' => [
 						'shareType' => IShare::TYPE_FEDERATED_GROUP,
-						'shareWith' => $group->getGID(),
-						'shareWithDescription' => $this->getShareWithDescription($group)
+						'shareWith' => $group->getGID()
 					],
+					'shareWithDescription' => $this->getShareWithDescription($group)					
 				];
 			}
 		}
