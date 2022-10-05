@@ -1615,6 +1615,16 @@ class ShareAPIController extends OCSController {
 		if (!$this->shareManager->outgoingServer2ServerSharesAllowed()) {
 			throw new ShareNotFound();
 		}
+
+		try {
+			if ($this->shareManager->shareProviderExists(IShare::TYPE_FEDERATED_GROUP)) {
+				$share = $this->shareManager->getShareById('federated_group:' . $id, $this->currentUser);
+				return $share;
+			}
+		} catch (ShareNotFound $e) {
+			// Do nothing, just try the other share type
+		}
+
 		$share = $this->shareManager->getShareById('ocFederatedSharing:' . $id, $this->currentUser);
 
 		return $share;
@@ -1690,8 +1700,7 @@ class ShareAPIController extends OCSController {
 			IShare::TYPE_EMAIL,
 			IShare::TYPE_CIRCLE,
 			IShare::TYPE_ROOM,
-			IShare::TYPE_DECK,
-			IShare::TYPE_FEDERATED_GROUP,
+			IShare::TYPE_DECK
 		];
 
 		// Should we assume that the (currentUser) viewer is the owner of the node !?
@@ -1717,10 +1726,13 @@ class ShareAPIController extends OCSController {
 			$federatedShares = $this->shareManager->getSharesBy(
 				$this->currentUser, IShare::TYPE_REMOTE_GROUP, $node, $reShares, -1, 0
 			);
-			$federatedGroupShares = $this->shareManager->getSharesBy(
-				$this->currentUser, IShare::TYPE_FEDERATED_GROUP, $node, $reShares, -1, 0
-			);
-			$shares = array_merge($shares, $federatedShares, $federatedGroupShares);
+			if ($this->shareManager->shareProviderExists(IShare::TYPE_FEDERATED_GROUP)) {
+				$federatedGroupShares = $this->shareManager->getSharesBy(
+					$this->currentUser, IShare::TYPE_FEDERATED_GROUP, $node, $reShares, -1, 0
+				);
+				$federatedShares = array_merge($federatedShares, $federatedGroupShares);
+			}
+			$shares = array_merge($shares, $federatedShares);
 		}
 
 		return $shares;
@@ -1850,20 +1862,18 @@ class ShareAPIController extends OCSController {
 		$deckShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_DECK, $path, $reshares, -1, 0);
 
 		// FEDERATION
+		$federatedShares = [];
 		if ($this->shareManager->outgoingServer2ServerSharesAllowed()) {
-			$federatedShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE, $path, $reshares, -1, 0);
-		} else {
-			$federatedShares = [];
+			$remoteShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE, $path, $reshares, -1, 0);
+			$federatedShares = array_merge($federatedShares, $remoteShares);
 		}
 		if ($this->shareManager->outgoingServer2ServerGroupSharesAllowed()) {
-			$federatedGroupShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE_GROUP, $path, $reshares, -1, 0);
-			$virtOrgShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_FEDERATED_GROUP, $path, $reshares, -1, 0);
-			$federatedGroupShares = array_merge($federatedGroupShares, $virtOrgShares);
-		} else {
-			$federatedGroupShares = [];
+			$remoteGroupShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_REMOTE_GROUP, $path, $reshares, -1, 0);
+			$federatedGroupShares = $this->shareManager->getSharesBy($this->currentUser, IShare::TYPE_FEDERATED_GROUP, $path, $reshares, -1, 0);
+			$federatedShares = array_merge($federatedShares, $remoteGroupShares, $federatedGroupShares);
 		}
 
-		return array_merge($userShares, $groupShares, $linkShares, $mailShares, $circleShares, $roomShares, $deckShares, $federatedShares, $federatedGroupShares);
+		return array_merge($userShares, $groupShares, $linkShares, $mailShares, $circleShares, $roomShares, $deckShares, $federatedShares);
 	}
 
 
