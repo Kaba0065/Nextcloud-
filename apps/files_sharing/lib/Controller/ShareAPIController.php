@@ -60,6 +60,7 @@ use OCP\AppFramework\OCS\OCSNotFoundException;
 use OCP\AppFramework\OCSController;
 use OCP\AppFramework\QueryException;
 use OCP\Constants;
+use OCP\Federation\ICloudIdManager;
 use OCP\Files\InvalidPathException;
 use OCP\Files\IRootFolder;
 use OCP\Files\Folder;
@@ -115,6 +116,8 @@ class ShareAPIController extends OCSController {
 	private $userStatusManager;
 	/** @var IPreview */
 	private $previewManager;
+	/** @var ICloudIdManager */
+	private $cloudIdManager;
 
 	/**
 	 * Share20OCS constructor.
@@ -147,7 +150,8 @@ class ShareAPIController extends OCSController {
 		IAppManager $appManager,
 		IServerContainer $serverContainer,
 		IUserStatusManager $userStatusManager,
-		IPreview $previewManager
+		IPreview $previewManager,
+		ICloudIdManager $cloudIdManager
 	) {
 		parent::__construct($appName, $request);
 
@@ -164,6 +168,7 @@ class ShareAPIController extends OCSController {
 		$this->serverContainer = $serverContainer;
 		$this->userStatusManager = $userStatusManager;
 		$this->previewManager = $previewManager;
+		$this->cloudIdManager = $cloudIdManager;
 	}
 
 	/**
@@ -280,7 +285,8 @@ class ShareAPIController extends OCSController {
 			$result['share_with_displayname'] = $this->getDisplayNameFromAddressBook($share->getSharedWith(), 'CLOUD');
 			$result['token'] = $share->getToken();
 		} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
-			$group = $this->groupManager->get($share->getSharedWith());
+			$cloudId = $this->cloudIdManager->resolveCloudId($share->getSharedWith(), false);
+			$group = $this->groupManager->get($cloudId->getUser());
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
 			$result['token'] = $share->getToken();
