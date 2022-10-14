@@ -150,11 +150,9 @@ class RequestHandlerController extends Controller {
 			);
 		}
 
-		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
-		$shareWith = $cloudId->getUser();
-
 		if ($shareType === 'user') {
-			$shareWith = $this->mapUid($shareWith);
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
+			$shareWith = $this->mapUid($cloudId->getUser());
 
 			if (!$this->userManager->userExists($shareWith)) {
 				$response = new JSONResponse(
@@ -167,6 +165,8 @@ class RequestHandlerController extends Controller {
 		}
 
 		if ($shareType === 'group') {
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
+			$shareWith = $cloudId->getUser();			
 			if (!$this->groupManager->groupExists($shareWith)) {
 				$response = new JSONResponse(
 					['message' => 'Group "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
@@ -176,6 +176,11 @@ class RequestHandlerController extends Controller {
 				return $response;
 			}
 		}
+
+		if ($shareType === 'federated_group') {
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith, false);
+			$shareWith = $cloudId->getUser();			
+		}		
 
 		// if no explicit display name is given, we use the uid as display name
 		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
