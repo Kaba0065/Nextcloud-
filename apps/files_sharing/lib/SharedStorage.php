@@ -55,11 +55,17 @@ use OCP\Files\Storage\IStorage;
 use OCP\IUserManager;
 use OCP\Lock\ILockingProvider;
 use OCP\Share\IShare;
+use Psr\Log\LoggerInterface;
 
 /**
  * Convert target path to source path and pass the function call to the correct storage provider
  */
 class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedStorage, IDisableEncryptionStorage {
+	/**
+	 * @psalm-suppress NonInvariantDocblockPropertyType
+	 * @var \OC\Files\Storage\Storage|null $storage
+	 */
+	protected $storage;
 
 	/** @var \OCP\Share\IShare */
 	private $superShare;
@@ -82,10 +88,7 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 	/** @var string */
 	private $user;
 
-	/**
-	 * @var \OCP\ILogger
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
 	/** @var  IStorage */
 	private $nonMaskedStorage;
@@ -102,7 +105,7 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 
 	public function __construct($arguments) {
 		$this->ownerView = $arguments['ownerView'];
-		$this->logger = \OC::$server->getLogger();
+		$this->logger = \OC::$server->get(LoggerInterface::class);
 
 		$this->superShare = $arguments['superShare'];
 		$this->groupedShares = $arguments['groupedShares'];
@@ -164,18 +167,21 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 		} catch (NotFoundException $e) {
 			// original file not accessible or deleted, set FailedStorage
 			$this->storage = new FailedStorage(['exception' => $e]);
+			$this->nonMaskedStorage = $this->storage;
 			$this->cache = new FailedCache();
 			$this->rootPath = '';
 		} catch (NoUserException $e) {
 			// sharer user deleted, set FailedStorage
 			$this->storage = new FailedStorage(['exception' => $e]);
+			$this->nonMaskedStorage = $this->storage;
 			$this->cache = new FailedCache();
 			$this->rootPath = '';
 		} catch (\Exception $e) {
 			$this->storage = new FailedStorage(['exception' => $e]);
+			$this->nonMaskedStorage = $this->storage;
 			$this->cache = new FailedCache();
 			$this->rootPath = '';
-			$this->logger->logException($e);
+			$this->logger->error($e->getMessage(), ['exception' => $e]);
 		}
 
 		if (!$this->nonMaskedStorage) {
@@ -200,7 +206,17 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 		])) {
 			return false;
 		}
-		return parent::instanceOfStorage($class);
+		if (ltrim($class, '\\') === 'OC\Files\Storage\Shared') {
+			// FIXME Temporary fix to keep existing checks working
+			return true;
+		}
+		if (is_a($this, $class)) {
+			return true;
+		}
+
+		$storage = $this->getWrapperStorage();
+
+		return $storage->instanceOfStorage($class);
 	}
 
 	/**
@@ -532,6 +548,17 @@ class SharedStorage extends \OC\Files\Storage\Wrapper\Jail implements ISharedSto
 
 	public function getWrapperStorage() {
 		$this->init();
+
+		// `init` should handle this, but apparently it sometimes doesn't
+		if (!$this->storage instanceof IStorage) {
+			$e = new \Exception('Share source storage is null after initializing for share: ' . $this->getShare()->getId());
+			$this->storage = new FailedStorage(['exception' => $e]);
+			$this->nonMaskedStorage = $this->storage;
+			$this->cache = new FailedCache();
+			$this->rootPath = '';
+			$this->logger->error($e->getMessage(), ['exception' => $e]);
+		}
+
 		return $this->storage;
 	}
 
