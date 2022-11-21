@@ -1047,7 +1047,7 @@ class Manager implements IManager {
 				$this->validateExpirationDateLink($share);
 				$expirationDateUpdated = true;
 			}
-		} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP) {
+		} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP || $share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
 			if ($share->getExpirationDate() != $originalShare->getExpirationDate()) {
 				//Verify the expiration date
 				$this->validateExpirationDateInternal($share);
