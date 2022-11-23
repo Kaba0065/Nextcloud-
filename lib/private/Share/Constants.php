@@ -75,7 +75,7 @@ class Constants {
 	public const SHARE_TYPE_DECK = 12;
 	// const SHARE_TYPE_DECK_USER = 13; // Internal type used by DeckShareProvider
 
-	public const SHARE_TYPE_FEDERATED_GROUP = 25;
+	public const SHARE_TYPE_FEDERATED_GROUP = 14;
 
 	public const FORMAT_NONE = -1;
 	public const FORMAT_STATUSES = -2;

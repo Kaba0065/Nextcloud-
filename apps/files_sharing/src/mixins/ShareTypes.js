@@ -28,7 +28,7 @@ export default {
 		return {
 			SHARE_TYPES: {
 				...ShareTypes,
-				SHARE_TYPE_FEDERATED_GROUP: 25
+				SHARE_TYPE_FEDERATED_GROUP: 14
 			}
 		}
 	},
