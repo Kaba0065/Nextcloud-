@@ -1624,7 +1624,7 @@ class ShareAPIController extends OCSController {
 
 		try {
 			if ($this->shareManager->shareProviderExists(IShare::TYPE_FEDERATED_GROUP)) {
-				$share = $this->shareManager->getShareById('federated_group:' . $id, $this->currentUser);
+				$share = $this->shareManager->getShareById('ocFederatedGroupShare:' . $id, $this->currentUser);
 				return $share;
 			}
 		} catch (ShareNotFound $e) {
