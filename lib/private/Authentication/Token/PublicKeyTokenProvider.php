@@ -436,6 +436,10 @@ class PublicKeyTokenProvider implements IProvider {
 		// Update the password for all tokens
 		$tokens = $this->mapper->getTokenByUser($uid);
 		foreach ($tokens as $t) {
+			// But, do not add a password to passwordless tokens.
+			if (is_null($t->getPassword())) {
+				continue;
+			}
 			$publicKey = $t->getPublicKey();
 			$encryptedPassword = $this->encryptPassword($password, $publicKey);
 			if ($t->getPassword() !== $encryptedPassword) {
