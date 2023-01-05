@@ -284,12 +284,6 @@ class ShareAPIController extends OCSController {
 			$result['share_with'] = $share->getSharedWith();
 			$result['share_with_displayname'] = $this->getDisplayNameFromAddressBook($share->getSharedWith(), 'CLOUD');
 			$result['token'] = $share->getToken();
-		} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
-			$cloudId = $this->cloudIdManager->resolveCloudId($share->getSharedWith(), false);
-			$group = $this->groupManager->get($cloudId->getUser());
-			$result['share_with'] = $share->getSharedWith();
-			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
-			$result['token'] = $share->getToken();
 		} elseif ($share->getShareType() === IShare::TYPE_EMAIL) {
 			$result['share_with'] = $share->getSharedWith();
 			$result['password'] = $share->getPassword();
@@ -332,7 +326,15 @@ class ShareAPIController extends OCSController {
 				$result = array_merge($result, $this->getDeckShareHelper()->formatShare($share));
 			} catch (QueryException $e) {
 			}
-		}
+		} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
+			$group = $this->groupManager->get($share->getSharedWith());
+			$result['share_with'] = $share->getSharedWith();
+			$result['share_with_displayname'] = $group !== null ? $group->getDisplayName() : $share->getSharedWith();
+			try {
+				$result = array_merge($result, $this->getFederatedGroupShareHelper()->formatShare($share));
+			} catch (QueryException $e) {
+			}			
+		}		
 
 
 		$result['mail_send'] = $share->getMailSend() ? 1 : 0;
@@ -1690,6 +1692,23 @@ class ShareAPIController extends OCSController {
 
 		return $this->serverContainer->get('\OCA\Deck\Sharing\ShareAPIHelper');
 	}
+
+	/**
+	 * Returns the helper of ShareAPIHelper for federated group shares.
+	 *
+	 * If the VO federation application is not enabled or the helper is not available
+	 * a QueryException is thrown instead.
+	 *
+	 * @return \OCA\VO_Federation\Sharing\ShareAPIHelper
+	 * @throws QueryException
+	 */
+	private function getFederatedGroupShareHelper() {
+		if (!$this->appManager->isEnabledForUser('vo_federation')) {
+			throw new QueryException();
+		}
+
+		return $this->serverContainer->get('\OCA\VO_Federation\Sharing\ShareAPIHelper');
+	}	
 
 	/**
 	 * @param string $viewer
