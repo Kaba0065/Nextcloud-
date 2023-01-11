@@ -154,11 +154,22 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	}
 
 	/**
-	 * get a specific cloud federation provider for a given federation share
-	 *
-	 * @param ICloudFederationShare $share
-	 * @return ICloudFederationProvider
-	 * @throws ProviderDoesNotExistsException
+	 * @inheritdoc
+	 */
+	public function getCloudFederationProviderForShareType($resourceType, $shareType) {
+		foreach ($this->cloudFederationProvider as $provider) {
+			if ($provider['resourceType'] === $resourceType &&
+					isset($provider['supportedShareTypes']) &&
+					in_array($shareType, $provider['supportedShareTypes'])) {
+				return call_user_func($provider['callback']);
+			}
+		}
+
+		return $this->getCloudFederationProvider($resourceType);
+	}
+
+	/**
+	 * @inheritdoc
 	 */
 	public function getCloudFederationProviderForFederationShare(ICloudFederationShare $share) {
 		$shareType = $share->getShareType();
@@ -174,6 +185,7 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 
 		return $this->getCloudFederationProvider($resourceType);
 	}
+
 	public function sendShare(ICloudFederationShare $share) {
 		if ($share->getShareType() === 'federated_group') {
 			$isUserHint = false;

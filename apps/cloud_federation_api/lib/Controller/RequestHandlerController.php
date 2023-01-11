@@ -239,7 +239,7 @@ class RequestHandlerController extends Controller {
 	 * @param array $notification the actual payload of the notification
 	 * @return JSONResponse
 	 */
-	public function receiveNotification($notificationType, $resourceType, $providerId, array $notification) {
+	public function receiveNotification($notificationType, $resourceType, $providerId,  array $notification) {
 
 		// check if all required parameters are set
 		if ($notificationType === null ||
@@ -254,7 +254,11 @@ class RequestHandlerController extends Controller {
 		}
 
 		try {
-			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			if ($notification['shareType']) {
+				$provider = $this->cloudFederationProviderManager->getCloudFederationProviderForShareType($resourceType, $notification['shareType']);
+			} else {
+				$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			}			
 			$result = $provider->notificationReceived($notificationType, $providerId, $notification);
 		} catch (ProviderDoesNotExistsException $e) {
 			return new JSONResponse(

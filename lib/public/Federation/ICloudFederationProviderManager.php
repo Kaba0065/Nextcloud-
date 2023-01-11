@@ -89,6 +89,18 @@ interface ICloudFederationProviderManager {
 	public function getCloudFederationProvider($resourceType);
 
 	/**
+	 * get a specific cloud federation provider for share type
+	 *
+	 * @param string $resourceType
+	 * @param string $shareType
+	 * @return ICloudFederationProvider
+	 * @throws Exceptions\ProviderDoesNotExistsException
+	 *
+	 * @since 26.0.0
+	 */
+	public function getCloudFederationProviderForShareType($resourceType, $shareType);	
+
+	/**
 	 * get a specific cloud federation provider for a given federation share
 	 *
 	 * @param ICloudFederationShare $share
