@@ -395,7 +395,6 @@ export default {
 				return 'icon-user'
 			case this.SHARE_TYPES.SHARE_TYPE_REMOTE_GROUP:
 			case this.SHARE_TYPES.SHARE_TYPE_GROUP:
-			case this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP:				
 				return 'icon-group'
 			case this.SHARE_TYPES.SHARE_TYPE_EMAIL:
 				return 'icon-mail'
@@ -405,7 +404,8 @@ export default {
 				return 'icon-room'
 			case this.SHARE_TYPES.SHARE_TYPE_DECK:
 				return 'icon-deck'
-
+			case this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP:
+				return 'icon-organization'
 			default:
 				return ''
 			}
