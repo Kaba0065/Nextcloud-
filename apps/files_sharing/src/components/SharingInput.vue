@@ -195,6 +195,7 @@ export default {
 				this.SHARE_TYPES.SHARE_TYPE_ROOM,
 				this.SHARE_TYPES.SHARE_TYPE_GUEST,
 				this.SHARE_TYPES.SHARE_TYPE_DECK,
+				this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP,
 			]
 
 			if (OC.getCapabilities().files_sharing.public.enabled === true) {
@@ -403,7 +404,8 @@ export default {
 				return 'icon-room'
 			case this.SHARE_TYPES.SHARE_TYPE_DECK:
 				return 'icon-deck'
-
+			case this.SHARE_TYPES.SHARE_TYPE_FEDERATED_GROUP:
+				return 'icon-organization'
 			default:
 				return ''
 			}

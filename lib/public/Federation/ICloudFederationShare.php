@@ -220,7 +220,7 @@ interface ICloudFederationShare {
 	public function getSharedByDisplayName();
 
 	/**
-	 * get share type (group or user)
+	 * get share type (group, user or federated_group)
 	 *
 	 * @return string
 	 *

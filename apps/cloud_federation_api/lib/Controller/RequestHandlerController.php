@@ -150,11 +150,9 @@ class RequestHandlerController extends Controller {
 			);
 		}
 
-		$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
-		$shareWith = $cloudId->getUser();
-
 		if ($shareType === 'user') {
-			$shareWith = $this->mapUid($shareWith);
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
+			$shareWith = $this->mapUid($cloudId->getUser());
 
 			if (!$this->userManager->userExists($shareWith)) {
 				$response = new JSONResponse(
@@ -167,6 +165,8 @@ class RequestHandlerController extends Controller {
 		}
 
 		if ($shareType === 'group') {
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith);
+			$shareWith = $cloudId->getUser();			
 			if (!$this->groupManager->groupExists($shareWith)) {
 				$response = new JSONResponse(
 					['message' => 'Group "' . $shareWith . '" does not exists at ' . $this->urlGenerator->getBaseUrl()],
@@ -176,6 +176,11 @@ class RequestHandlerController extends Controller {
 				return $response;
 			}
 		}
+
+		if ($shareType === 'federated_group') {
+			$cloudId = $this->cloudIdManager->resolveCloudId($shareWith, false);
+			$shareWith = $cloudId->getUser();			
+		}		
 
 		// if no explicit display name is given, we use the uid as display name
 		$ownerDisplayName = $ownerDisplayName === null ? $owner : $ownerDisplayName;
@@ -188,8 +193,8 @@ class RequestHandlerController extends Controller {
 		}
 
 		try {
-			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
 			$share = $this->factory->getCloudFederationShare($shareWith, $name, $description, $providerId, $owner, $ownerDisplayName, $sharedBy, $sharedByDisplayName, '', $shareType, $resourceType);
+			$provider = $this->cloudFederationProviderManager->getCloudFederationProviderForFederationShare($share);
 			$share->setProtocol($protocol);
 			$provider->shareReceived($share);
 		} catch (ProviderDoesNotExistsException $e) {
@@ -234,7 +239,7 @@ class RequestHandlerController extends Controller {
 	 * @param array $notification the actual payload of the notification
 	 * @return JSONResponse
 	 */
-	public function receiveNotification($notificationType, $resourceType, $providerId, array $notification) {
+	public function receiveNotification($notificationType, $resourceType, $providerId,  array $notification) {
 
 		// check if all required parameters are set
 		if ($notificationType === null ||
@@ -249,7 +254,11 @@ class RequestHandlerController extends Controller {
 		}
 
 		try {
-			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			if ($notification['shareType']) {
+				$provider = $this->cloudFederationProviderManager->getCloudFederationProviderForShareType($resourceType, $notification['shareType']);
+			} else {
+				$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
+			}			
 			$result = $provider->notificationReceived($notificationType, $providerId, $notification);
 		} catch (ProviderDoesNotExistsException $e) {
 			return new JSONResponse(

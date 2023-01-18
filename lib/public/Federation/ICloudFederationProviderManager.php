@@ -46,6 +46,20 @@ interface ICloudFederationProviderManager {
 	public function addCloudFederationProvider($resourceType, $displayName, callable $callback);
 
 	/**
+	 * Registers an callback function which must return an cloud federation provider
+	 * for a set of supported share types
+	 *
+	 * @param string $providerId unique id for removal
+	 * @param string $resourceType which resource type does the provider handles
+	 * @param array $supportedShareTypes which share types does the provider support
+	 * @param string $displayName user facing name of the federated share provider
+	 * @param callable $callback
+	 * 
+	 * @since 26.0.0
+	 */
+	public function addCloudFederationProviderForShareType($providerId, $resourceType, array $supportedShareTypes, $displayName, callable $callback);
+
+	/**
 	 * remove cloud federation provider
 	 *
 	 * @param string $resourceType
@@ -73,6 +87,29 @@ interface ICloudFederationProviderManager {
 	 * @since 14.0.0
 	 */
 	public function getCloudFederationProvider($resourceType);
+
+	/**
+	 * get a specific cloud federation provider for share type
+	 *
+	 * @param string $resourceType
+	 * @param string $shareType
+	 * @return ICloudFederationProvider
+	 * @throws Exceptions\ProviderDoesNotExistsException
+	 *
+	 * @since 26.0.0
+	 */
+	public function getCloudFederationProviderForShareType($resourceType, $shareType);	
+
+	/**
+	 * get a specific cloud federation provider for a given federation share
+	 *
+	 * @param ICloudFederationShare $share
+	 * @return ICloudFederationProvider
+	 * @throws ProviderDoesNotExistsException
+	 * 
+	 * @since 26.0.0
+	 */	
+	public function getCloudFederationProviderForFederationShare(ICloudFederationShare $share);	
 
 	/**
 	 * send federated share

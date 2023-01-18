@@ -50,7 +50,15 @@ class Config {
 	public function getSupportedShareTypes($resourceType) {
 		try {
 			$provider = $this->cloudFederationProviderManager->getCloudFederationProvider($resourceType);
-			return $provider->getSupportedShareTypes();
+			$supportedShareTypes = $provider->getSupportedShareTypes();
+			$allProviders = $this->cloudFederationProviderManager->getAllCloudFederationProviders();
+			foreach ($allProviders as $provider) {
+				if ($provider['resourceType'] === $resourceType &&
+						isset($provider['supportedShareTypes'])) {
+					$supportedShareTypes = array_merge($supportedShareTypes, $provider['supportedShareTypes']);
+				}
+			}
+			return array_unique($supportedShareTypes);
 		} catch (\Exception $e) {
 			return [];
 		}

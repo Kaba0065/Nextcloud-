@@ -97,12 +97,36 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	}
 
 	/**
+	 * Registers an callback function which must return an cloud federation provider
+	 * for a set of supported share types
+	 *
+	 * @param string $providerId unique id for removal
+	 * @param string $resourceType which resource type does the provider handles
+	 * @param array $supportedShareTypes which share types does the provider support
+	 * @param string $displayName user facing name of the federated share provider
+	 * @param callable $callback
+	 */
+	public function addCloudFederationProviderForShareType($providerId, $resourceType, array $supportedShareTypes, $displayName, callable $callback) {
+		$this->cloudFederationProvider[] = [
+			'providerId' => $providerId,
+			'resourceType' => $resourceType,
+			'supportedShareTypes' => $supportedShareTypes,
+			'displayName' => $displayName,
+			'callback' => $callback,
+		];
+	}
+
+	/**
 	 * remove cloud federation provider
 	 *
 	 * @param string $providerId
 	 */
 	public function removeCloudFederationProvider($providerId) {
-		unset($this->cloudFederationProvider[$providerId]);
+		foreach (array_keys($this->cloudFederationProvider) as $key) {
+			if ($key === $providerId || $this->cloudFederationProvider[$key]['providerId'] === $providerId) {
+				unset($this->cloudFederationProvider[$key]);
+			}			
+		}
 	}
 
 	/**
@@ -115,7 +139,7 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 	}
 
 	/**
-	 * get a specific cloud federation provider
+	 * get a generic cloud federation provider for a resource type
 	 *
 	 * @param string $resourceType
 	 * @return ICloudFederationProvider
@@ -129,8 +153,46 @@ class CloudFederationProviderManager implements ICloudFederationProviderManager 
 		}
 	}
 
+	/**
+	 * @inheritdoc
+	 */
+	public function getCloudFederationProviderForShareType($resourceType, $shareType) {
+		foreach ($this->cloudFederationProvider as $provider) {
+			if ($provider['resourceType'] === $resourceType &&
+					isset($provider['supportedShareTypes']) &&
+					in_array($shareType, $provider['supportedShareTypes'])) {
+				return call_user_func($provider['callback']);
+			}
+		}
+
+		return $this->getCloudFederationProvider($resourceType);
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getCloudFederationProviderForFederationShare(ICloudFederationShare $share) {
+		$shareType = $share->getShareType();
+		$resourceType = $share->getResourceType();
+
+		foreach ($this->cloudFederationProvider as $provider) {
+			if ($provider['resourceType'] === $resourceType &&
+					isset($provider['supportedShareTypes']) &&
+					in_array($shareType, $provider['supportedShareTypes'])) {
+				return call_user_func($provider['callback']);
+			}
+		}
+
+		return $this->getCloudFederationProvider($resourceType);
+	}
+
 	public function sendShare(ICloudFederationShare $share) {
-		$cloudID = $this->cloudIdManager->resolveCloudId($share->getShareWith());
+		if ($share->getShareType() === 'federated_group') {
+			$isUserHint = false;
+		} else {
+			$isUserHint = null;
+		}
+		$cloudID = $this->cloudIdManager->resolveCloudId($share->getShareWith(), $isUserHint);
 		$ocmEndPoint = $this->getOCMEndPoint($cloudID->getRemote());
 		if (empty($ocmEndPoint)) {
 			return false;

@@ -245,6 +245,7 @@ class Manager implements IManager {
 			}
 		} elseif ($share->getShareType() === IShare::TYPE_ROOM) {
 		} elseif ($share->getShareType() === IShare::TYPE_DECK) {
+		} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
 		} else {
 			// We cannot handle other types yet
 			throw new \InvalidArgumentException('unknown share type');
@@ -379,7 +380,7 @@ class Manager implements IManager {
 	 * @throws \Exception
 	 */
 	protected function validateExpirationDateInternal(IShare $share) {
-		$isRemote = $share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP;
+		$isRemote = $share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP || $share->getShareType() === IShare::TYPE_FEDERATED_GROUP;
 
 		$expirationDate = $share->getExpirationDate();
 
@@ -668,7 +669,7 @@ class Manager implements IManager {
 	 * @param IShare $share
 	 */
 	protected function setLinkParent(IShare $share) {
-
+		
 		// No sense in checking if the method is not there.
 		if (method_exists($share, 'setParent')) {
 			$storage = $share->getNode()->getStorage();
@@ -759,6 +760,9 @@ class Manager implements IManager {
 				// Verify the expiration date
 				$share = $this->validateExpirationDateInternal($share);
 			} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP) {
+				//Verify the expiration date
+				$share = $this->validateExpirationDateInternal($share);
+			} elseif ($share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
 				//Verify the expiration date
 				$share = $this->validateExpirationDateInternal($share);
 			} elseif ($share->getShareType() === IShare::TYPE_LINK
@@ -1043,7 +1047,7 @@ class Manager implements IManager {
 				$this->validateExpirationDateLink($share);
 				$expirationDateUpdated = true;
 			}
-		} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP) {
+		} elseif ($share->getShareType() === IShare::TYPE_REMOTE || $share->getShareType() === IShare::TYPE_REMOTE_GROUP || $share->getShareType() === IShare::TYPE_FEDERATED_GROUP) {
 			if ($share->getExpirationDate() != $originalShare->getExpirationDate()) {
 				//Verify the expiration date
 				$this->validateExpirationDateInternal($share);
@@ -1500,6 +1504,16 @@ class Manager implements IManager {
 		if ($share === null) {
 			try {
 				$provider = $this->factory->getProviderForType(IShare::TYPE_REMOTE);
+				$share = $provider->getShareByToken($token);
+			} catch (ProviderException $e) {
+			} catch (ShareNotFound $e) {
+			}
+		}
+
+		// If it is not a link share try to fetch a federated group share by token
+		if ($share === null && $this->shareProviderExists(IShare::TYPE_FEDERATED_GROUP)) {
+			try {
+				$provider = $this->factory->getProviderForType(IShare::TYPE_FEDERATED_GROUP);
 				$share = $provider->getShareByToken($token);
 			} catch (ProviderException $e) {
 			} catch (ShareNotFound $e) {
