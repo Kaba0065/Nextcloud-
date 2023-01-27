@@ -312,7 +312,7 @@ class SetupManager {
 			$this->oneTimeUserSetup($user);
 		}
 
-		$this->eventLogger->start('setup_fs', 'Setup filesystem');
+		$this->eventLogger->start('setup_fs', 'Setup user filesystem for: ' . $user->getUID());
 
 		if ($this->lockdownManager->canAccessFilesystem()) {
 			$mountCallback();
