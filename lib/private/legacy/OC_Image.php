@@ -52,7 +52,12 @@ class OC_Image implements \OCP\IImage {
 	// Default memory limit for images to load (256 MBytes).
 	protected const DEFAULT_MEMORY_LIMIT = 256;
 
-	// Default quality for jpeg images
+	/**
+	 * Default quality for jpeg images
+	 * 
+	 * @deprecated this choice should be left to the image library
+	 * @see https://www.php.net/manual/en/function.imagejpeg.php#refsect1-function.imagejpeg-parameters
+	 */
 	protected const DEFAULT_JPEG_QUALITY = 80;
 
 	/** @var false|resource|\GdImage */
@@ -121,6 +126,19 @@ class OC_Image implements \OCP\IImage {
 	 */
 	public function mimeType(): ?string {
 		return $this->valid() ? $this->mimeType : null;
+	}
+
+	public function setMimeType(string $mimeType): void {
+		$this->mimeType = $mimeType;
+	}
+
+	/**
+	 * Goofy alias for `mimeType`
+	 * 
+	 * @deprecated in favor of `mimeType`
+	 */
+	public function dataMimeType(): ?string {
+		return $this->mimeType();
 	}
 
 	/**
@@ -352,23 +370,6 @@ class OC_Image implements \OCP\IImage {
 		return $this->resource;
 	}
 
-	/**
-	 * @return string Returns the mimetype of the data. Returns null if the data is not valid.
-	 */
-	public function dataMimeType(): ?string {
-		if (!$this->valid()) {
-			return null;
-		}
-
-		switch ($this->mimeType) {
-			case 'image/png':
-			case 'image/jpeg':
-			case 'image/gif':
-				return $this->mimeType;
-			default:
-				return 'image/png';
-		}
-	}
 
 	/**
 	 * @return null|string Returns the raw image data.
@@ -377,6 +378,9 @@ class OC_Image implements \OCP\IImage {
 		if (!$this->valid()) {
 			return null;
 		}
+
+		$quality = $this->getQuality();
+
 		ob_start();
 		switch ($this->mimeType) {
 			case "image/png":
@@ -385,11 +389,16 @@ class OC_Image implements \OCP\IImage {
 			case "image/jpeg":
 				/** @psalm-suppress InvalidScalarArgument */
 				imageinterlace($this->resource, (PHP_VERSION_ID >= 80000 ? true : 1));
-				$quality = $this->getJpegQuality();
-				$res = imagejpeg($this->resource, null, $quality);
+				$res = imagejpeg($this->resource, null, $this->getJpegQuality());
 				break;
 			case "image/gif":
 				$res = imagegif($this->resource);
+				break;
+			case "image/webp":
+				$res = imagewebp($this->resource, null, $quality);
+				break;
+			case "image/avif":
+				$res = imageavif($this->resource, null, $quality);
 				break;
 			default:
 				$res = imagepng($this->resource);
@@ -403,6 +412,33 @@ class OC_Image implements \OCP\IImage {
 	}
 
 	/**
+	 * Gets the image quality with which to write lossy image previews
+	 * 
+	 * @return int the image quality on a scale of 0-100, or -1 for the default
+	 */
+	private function getQuality(): int {
+		$quality = $this->config->getAppValue('preview', 'quality');
+
+		if ($quality && (!intval($quality) || $quality < 0 || $quality > 100)) {
+			$this->logger->error(
+				'Preview quality must be an integer from 0 to 100; got ' .
+				"$quality. Falling back to the default preview quality."
+			);
+		}
+
+		// If quality is not set by the user or is invalid, then set it to the
+		// GD default value to entrust choosing a well-optimized default
+		// quality to the image library (which should make a much more educated
+		// choice than we would make). Hopefully GD doesn't mangle this idea...
+		// but it appears they do - WebP default should be 75 yet is 80.
+		// 
+		// See https://developers.google.com/speed/webp/docs/cwebp#options
+		if (!$quality) $quality = -1;
+
+		return (int) $quality;
+	}
+
+	/**
 	 * @return string - base64 encoded, which is suitable for embedding in a VCard.
 	 */
 	public function __toString() {
@@ -411,6 +447,8 @@ class OC_Image implements \OCP\IImage {
 
 	/**
 	 * @return int
+	 * 
+	 * @deprecated
 	 */
 	protected function getJpegQuality(): int {
 		$quality = $this->config->getAppValue('preview', 'jpeg_quality', (string) self::DEFAULT_JPEG_QUALITY);
@@ -725,6 +763,15 @@ class OC_Image implements \OCP\IImage {
 					$this->resource = @imagecreatefromwebp($imagePath);
 				} else {
 					$this->logger->debug('OC_Image->loadFromFile, webp images not supported: ' . $imagePath, ['app' => 'core']);
+				}
+				break;
+			case IMAGETYPE_AVIF:
+				if (imagetypes() & IMG_AVIF) {
+					if (!$this->checkImageSize($imagePath)) return false;
+
+					$this->resource = imagecreatefromavif($imagePath);
+				} else {
+					$this->logger->debug("OC_Image->loadFromFile: installation does not support AVIF; got $imagePath", ['app' => 'core']);
 				}
 				break;
 				/*

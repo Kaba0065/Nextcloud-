@@ -243,13 +243,15 @@ class PreviewManager implements IPreview {
 	/**
 	 * Check if a preview can be generated for a file
 	 */
-	public function isAvailable(\OCP\Files\FileInfo $file): bool {
+	public function isAvailable(\OCP\Files\FileInfo $file, ?string $previewMimeType = null): bool {
+		if (!$previewMimeType) $previewMimeType = $file->getMimeType();
+
 		if (!$this->config->getSystemValue('enable_previews', true)) {
 			return false;
 		}
 
 		$this->registerCoreProviders();
-		if (!$this->isMimeSupported($file->getMimetype())) {
+		if (!$this->isMimeSupported($previewMimeType)) {
 			return false;
 		}
 
@@ -259,7 +261,7 @@ class PreviewManager implements IPreview {
 		}
 
 		foreach ($this->providers as $supportedMimeType => $providers) {
-			if (preg_match($supportedMimeType, $file->getMimetype())) {
+			if (preg_match($supportedMimeType, $previewMimeType)) {
 				foreach ($providers as $providerClosure) {
 					$provider = $this->helper->getProvider($providerClosure);
 					if (!($provider instanceof IProviderV2)) {
@@ -319,6 +321,7 @@ class PreviewManager implements IPreview {
 			Preview\XBitmap::class,
 			Preview\Krita::class,
 			Preview\WebP::class,
+			Preview\Avif::class,
 		];
 
 		$this->defaultProviders = $this->config->getSystemValue('enabledPreviewProviders', array_merge([
@@ -366,6 +369,7 @@ class PreviewManager implements IPreview {
 		$this->registerCoreProvider(Preview\BMP::class, '/image\/bmp/');
 		$this->registerCoreProvider(Preview\XBitmap::class, '/image\/x-xbitmap/');
 		$this->registerCoreProvider(Preview\WebP::class, '/image\/webp/');
+		$this->registerCoreProvider(Preview\Avif::class, '/image\/avif/');
 		$this->registerCoreProvider(Preview\Krita::class, '/application\/x-krita/');
 		$this->registerCoreProvider(Preview\MP3::class, '/audio\/mpeg/');
 		$this->registerCoreProvider(Preview\OpenDocument::class, '/application\/vnd.oasis.opendocument.*/');
