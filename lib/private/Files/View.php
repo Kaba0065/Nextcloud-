@@ -1636,6 +1636,12 @@ class View {
 			$mounts = Filesystem::getMountManager()->findIn($this->fakeRoot);
 			foreach ($mounts as $mount) {
 				$mountPoint = $mount->getMountPoint();
+
+				// don't search in mounts inside the hidden folder
+				if (Filesystem::isPathHidden($mountPoint)) {
+					continue;
+				}
+
 				$storage = $mount->getStorage();
 				if ($storage) {
 					$cache = $storage->getCache('');

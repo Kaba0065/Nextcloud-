@@ -32,8 +32,9 @@
 
 namespace OC\Files\Node;
 
-use OCP\Cache\CappedMemoryCache;
+use OC\Cache\CappedMemoryCache;
 use OC\Files\FileInfo;
+use OC\Files\Filesystem;
 use OC\Files\Mount\Manager;
 use OC\Files\Mount\MountPoint;
 use OC\Files\Utils\PathHelper;
@@ -402,6 +403,20 @@ class Root extends Folder implements IRootFolder {
 		}
 
 		return $this->userFolderCache->get($userId);
+	}
+
+	public function getHiddenUserFolder($userId) {
+		$userFolder = $this->getUserFolder($userId);
+		$hiddenFolderName = Filesystem::getHiddenFolderName();
+		try {
+			return $userFolder->get($hiddenFolderName);
+		} catch (NotFoundException $e) {
+			return $userFolder->newFolder($hiddenFolderName);
+		}
+	}
+
+	public function clearCache() {
+		$this->userFolderCache = new CappedMemoryCache();
 	}
 
 	public function getUserMountCache() {

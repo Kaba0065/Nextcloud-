@@ -25,6 +25,7 @@
  */
 namespace OC\Files\Cache;
 
+use OC\Files\Filesystem;
 use OC\Files\Search\QueryOptimizer\QueryOptimizer;
 use OC\Files\Search\SearchBinaryOperator;
 use OC\SystemConfig;
@@ -138,6 +139,9 @@ class QuerySearchHelper {
 		if ($searchExpr) {
 			$query->andWhere($searchExpr);
 		}
+
+		// exclude entries from the hidden folder in the user storage
+		$query->andWhere($query->expr()->notLike('path', $query->createNamedParameter('files/' . Filesystem::getHiddenFolderName() . '%')));
 
 		$this->searchBuilder->addSearchOrdersToQuery($query, $searchQuery->getOrder());
 

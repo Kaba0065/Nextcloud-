@@ -32,6 +32,7 @@
  */
 namespace OCA\DAV\Connector\Sabre;
 
+use OC\Files\Filesystem;
 use OC\Files\Mount\MoveableMount;
 use OC\Files\View;
 use OC\Metadata\FileMetadata;
@@ -264,10 +265,14 @@ class Directory extends \OCA\DAV\Connector\Sabre\Node implements \Sabre\DAV\ICol
 			throw new Locked();
 		}
 
+		$hiddenFolderName = Filesystem::getHiddenFolderName();
+
 		$nodes = [];
 		foreach ($folderContent as $info) {
-			$node = $this->getChild($info->getName(), $info);
-			$nodes[] = $node;
+			if ($info->getName() !== $hiddenFolderName) {
+				$node = $this->getChild($info->getName(), $info);
+				$nodes[] = $node;
+			}
 		}
 		$this->dirContent = $nodes;
 		return $this->dirContent;

@@ -763,4 +763,12 @@ class Filesystem {
 	public static function getETag(string $path): string|false {
 		return self::$defaultInstance->getETag($path);
 	}
+
+	public static function getHiddenFolderName(): string {
+		return '.hidden_' . \OC_Util::getInstanceId();
+	}
+
+	public static function isPathHidden($path): bool {
+		return strpos($path, self::getHiddenFolderName()) !== false;
+	}
 }
