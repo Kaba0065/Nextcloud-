@@ -43,7 +43,6 @@ use OCA\DAV\CalDAV\Reminder\NotificationProvider\EmailProvider;
 use OCA\DAV\CalDAV\Reminder\NotificationProvider\PushProvider;
 use OCA\DAV\CalDAV\Reminder\NotificationProviderManager;
 use OCA\DAV\CalDAV\Reminder\Notifier;
-
 use OCA\DAV\Capabilities;
 use OCA\DAV\CardDAV\ContactsManager;
 use OCA\DAV\CardDAV\PhotoCache;
@@ -99,6 +98,7 @@ use OCP\AppFramework\IAppContainer;
 use OCP\Calendar\IManager as ICalendarManager;
 use OCP\Config\BeforePreferenceDeletedEvent;
 use OCP\Config\BeforePreferenceSetEvent;
+use OCP\Calendar\IManagerV2 as ICalendarManagerV2;
 use OCP\Contacts\IManager as IContactsManager;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\IServerContainer;
@@ -211,6 +211,8 @@ class Application extends App implements IBootstrap {
 		$context->injectFn([$this, 'registerHooks']);
 		$context->injectFn([$this, 'registerContactsManager']);
 		$context->injectFn([$this, 'registerCalendarManager']);
+		$context->injectFn([$this, 'registerCalendarManagerV2']);
+		$context->injectFn([$this, 'registerNotifier']);
 		$context->injectFn([$this, 'registerCalendarReminders']);
 	}
 
@@ -218,8 +220,6 @@ class Application extends App implements IBootstrap {
 								   EventDispatcherInterface $dispatcher,
 								   IAppContainer $container,
 								   IServerContainer $serverContainer) {
-		$hm->setup();
-
 		// first time login event setup
 		$dispatcher->addListener(IUser::class . '::firstLogin', function ($event) use ($hm) {
 			if ($event instanceof GenericEvent) {
@@ -306,6 +306,32 @@ class Application extends App implements IBootstrap {
 										   $userId) {
 		$cm = $container->query(CalendarManager::class);
 		$cm->setupCalendarProvider($calendarManager, $userId);
+	}
+
+	public function registerCalendarManagerV2(ICalendarManagerV2 $calendarManager,
+											  IAppContainer $container): void {
+		$calendarManager->register(function () use ($container, $calendarManager) {
+			$user = \OC::$server->getUserSession()->getUser();
+			if ($user !== null) {
+				$this->setupCalendarProviderV2($calendarManager, $container, $user->getUID());
+			}
+		});
+	}
+
+	/**
+	 * @param ICalendarManagerV2 $calendarManager
+	 * @param string $userId
+	 */
+	public function setupCalendarProviderV2(ICalendarManagerV2 $calendarManager,
+											IAppContainer $container,
+											$userId) {
+		/** @var CalendarManager $cm */
+		$cm = $container->query(CalendarManager::class);
+		$cm->setupCalendarProviderV2($calendarManager, $userId);
+	}
+
+	public function registerNotifier(INotificationManager $manager): void {
+		$manager->registerNotifierService(Notifier::class);
 	}
 
 	public function registerCalendarReminders(NotificationProviderManager $manager,
