@@ -25,7 +25,6 @@
 		<!-- Main collapsible entry -->
 		<SharingEntrySimple class="sharing-entry__inherited"
 			:title="mainTitle"
-			:subtitle="subTitle"
 			:aria-expanded="showInheritedShares">
 			<template #avatar>
 				<div class="avatar-shared icon-more-white" />
@@ -37,11 +36,19 @@
 		</SharingEntrySimple>
 
 		<!-- Inherited shares list -->
-		<SharingEntryInherited v-for="share in shares"
-			:key="share.id"
-			:file-info="fileInfo"
-			:share="share"
-			@remove:share="removeShare" />
+		<div v-if="loaded && shares.length === 0" class="sharing-entry__desc">
+			<span class="sharing-entry__title">{{ t('files_sharing', 'No others with access') }}</span>
+			<p>
+				{{ t('files_sharing', 'People with access to parent folders will show up here') }}
+			</p>
+		</div>
+		<template v-else>
+			<SharingEntryInherited v-for="share in shares"
+				:key="share.id"
+				:file-info="fileInfo"
+				:share="share"
+				@remove:share="removeShare" />
+		</template>
 	</ul>
 </template>
 
@@ -92,11 +99,6 @@ export default {
 		mainTitle() {
 			return t('files_sharing', 'Others with access')
 		},
-		subTitle() {
-			return (this.showInheritedShares && this.shares.length === 0)
-				? t('files_sharing', 'No other users with access found')
-				: ''
-		},
 		toggleTooltip() {
 			return this.fileInfo.type === 'dir'
 				? t('files_sharing', 'Toggle list of others with access to this directory')
@@ -132,10 +134,12 @@ export default {
 			try {
 				const url = generateOcsUrl('apps/files_sharing/api/v1/shares/inherited?format=json&path={path}', { path: this.fullPath })
 				const shares = await axios.get(url)
+
 				this.shares = shares.data.ocs.data
 					.map(share => new Share(share))
 					.sort((a, b) => b.createdTime - a.createdTime)
 				console.info(this.shares)
+
 				this.loaded = true
 			} catch (error) {
 				OC.Notification.showTemporary(t('files_sharing', 'Unable to fetch inherited shares'), { type: 'error' })
@@ -167,6 +171,28 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.sharing-entry {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	&__desc {
+		padding: 8px 8px 8px 40px;
+		line-height: 1.2em;
+		position: relative;
+		flex: 1 1;
+		min-width: 0;
+		p {
+			color: var(--color-text-maxcontrast);
+		}
+	}
+	&__title {
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		max-width: inherit;
+	}
+}
+
 .sharing-entry__inherited {
 	.avatar-shared {
 		width: 32px;
