@@ -225,6 +225,29 @@
 				:actions="userActions"
 				:edit="true"
 				@update:edit="toggleEdit" />
+			<div v-if="!loading.all"
+				class="toggleUserActions">
+				<NcActions>
+					<NcActionButton icon="icon-close"
+						:title="t('settings', 'Cancel')"
+						:aria-label="t('settings', 'Cancel')"
+						@click="editing = false" />
+				</NcActions>
+				<div v-click-outside="hideMenu" class="userPopoverMenuWrapper">
+					<button class="icon-more"
+						:aria-expanded="openedMenu"
+						:aria-label="t('settings', 'Toggle user actions menu')"
+						@click.prevent="toggleMenu" />
+					<div :class="{ 'open': openedMenu }" class="popovermenu">
+						<NcPopoverMenu :menu="userActions" />
+					</div>
+				</div>
+			</div>
+			<div :style="{opacity: feedbackMessage !== '' ? 1 : 0}"
+				class="feedback">
+				<div class="icon-checkmark" />
+				{{ feedbackMessage }}
+			</div>
 		</div>
 	</div>
 </template>
