@@ -104,6 +104,7 @@ class AccountManager implements IAccountManager {
 		self::PROPERTY_ROLE => self::SCOPE_LOCAL,
 		self::PROPERTY_HEADLINE => self::SCOPE_LOCAL,
 		self::PROPERTY_BIOGRAPHY => self::SCOPE_LOCAL,
+		self::PROPERTY_BIRTHDAY => self::SCOPE_LOCAL,
 	];
 
 	public function __construct(
@@ -666,6 +667,12 @@ class AccountManager implements IAccountManager {
 				'value' => '',
 				'scope' => $scopes[self::PROPERTY_TWITTER],
 				'verified' => self::NOT_VERIFIED,
+			],
+
+			[
+				'name' => self::PROPERTY_BIRTHDAY,
+				'value' => '',
+				'scope' => $scopes[self::PROPERTY_BIRTHDAY],
 			],
 
 			[

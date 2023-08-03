@@ -28,6 +28,7 @@
 namespace OCA\DAV\CardDAV;
 
 use Exception;
+use OC\DatabaseException;
 use OCP\Accounts\IAccountManager;
 use OCP\IURLGenerator;
 use OCP\IImage;
@@ -35,6 +36,7 @@ use OCP\IUser;
 use OCP\IUserManager;
 use Sabre\VObject\Component\VCard;
 use Sabre\VObject\Property\Text;
+use Sabre\VObject\Property\VCard\Date;
 
 class Converter {
 	/** @var IURLGenerator */
@@ -127,6 +129,13 @@ class Converter {
 					break;
 				case IAccountManager::PROPERTY_TWITTER:
 					$vCard->add(new Text($vCard, 'X-SOCIALPROFILE', $property->getValue(), ['TYPE' => 'TWITTER', 'X-NC-SCOPE' => $scope]));
+					break;
+				// TODO
+				case IAccountManager::PROPERTY_BIRTHDAY:
+					//$vCard->add(new Date($vCard, 'BDAY', $property->getValue(), ['X-NC-SCOPE' => $scope]));
+					//$vCard->add(new Text($vCard, 'BDAYk', $property->getValue(), ['TYPE' => 'BIRTHDAY', 'X-NC-SCOPE' => $scope]));
+					//$vCard->BDAY = new Date($vCard, 'DATE', $property->getValue());
+					$vCard->BDAY = $property->getValue();
 					break;
 				case IAccountManager::PROPERTY_ORGANISATION:
 					$vCard->add(new Text($vCard, 'ORG', $property->getValue(), ['X-NC-SCOPE' => $scope]));
