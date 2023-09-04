@@ -36,8 +36,11 @@
  */
 namespace OCA\Files_External\Lib\Storage;
 
+use Icewind\Streams\CallbackWrapper;
 use Icewind\Streams\IteratorDirectory;
 use Icewind\Streams\RetryWrapper;
+use OCP\IRequest;
+use OCP\Cache\CappedMemoryCache;
 use phpseclib\Net\SFTP\Stream;
 
 /**
@@ -56,6 +59,7 @@ class SFTP extends \OC\Files\Storage\Common {
 	 * @var \phpseclib\Net\SFTP
 	 */
 	protected $client;
+	private CappedMemoryCache $knownMTimes;
 
 	/**
 	 * @param string $host protocol://server:port
@@ -111,6 +115,8 @@ class SFTP extends \OC\Files\Storage\Common {
 
 		$this->root = '/' . ltrim($this->root, '/');
 		$this->root = rtrim($this->root, '/') . '/';
+
+		$this->knownMTimes = new CappedMemoryCache();
 	}
 
 	/**
@@ -368,6 +374,7 @@ class SFTP extends \OC\Files\Storage\Common {
 	 * {@inheritdoc}
 	 */
 	public function fopen($path, $mode) {
+		$path = $this->cleanPath($path);
 		try {
 			$absPath = $this->absPath($path);
 			switch ($mode) {
@@ -384,7 +391,13 @@ class SFTP extends \OC\Files\Storage\Common {
 				case 'wb':
 					SFTPWriteStream::register();
 					$context = stream_context_create(['sftp' => ['session' => $this->getConnection()]]);
-					return fopen('sftpwrite://' . trim($absPath, '/'), 'w', false, $context);
+					$fh = fopen('sftpwrite://' . trim($absPath, '/'), 'w', false, $context);
+					if ($fh) {
+						$fh = CallbackWrapper::wrap($fh, null, null, function() use ($path) {
+							$this->knownMTimes->set($path, time());
+						});
+					}
+					return $fh;
 				case 'a':
 				case 'ab':
 				case 'r+':
@@ -413,14 +426,13 @@ class SFTP extends \OC\Files\Storage\Common {
 				return false;
 			}
 			if (!$this->file_exists($path)) {
-				$this->getConnection()->put($this->absPath($path), '');
+				return $this->getConnection()->put($this->absPath($path), '');
 			} else {
 				return false;
 			}
 		} catch (\Exception $e) {
 			return false;
 		}
-		return true;
 	}
 
 	/**
@@ -454,10 +466,16 @@ class SFTP extends \OC\Files\Storage\Common {
 	 */
 	public function stat($path) {
 		try {
+			$path = $this->cleanPath($path);
 			$stat = $this->getConnection()->stat($this->absPath($path));
 
 			$mtime = $stat ? $stat['mtime'] : -1;
 			$size = $stat ? $stat['size'] : 0;
+
+			// the mtime can't be less than when we last touched it
+			if ($knownMTime = $this->knownMTimes->get($path)) {
+				$mtime = max($mtime, $knownMTime);
+			}
 
 			return ['mtime' => $mtime, 'size' => $size, 'ctime' => -1];
 		} catch (\Exception $e) {
@@ -475,5 +493,17 @@ class SFTP extends \OC\Files\Storage\Common {
 		// hostname because this might show up in logs (they are not used).
 		$url = 'sftp://' . urlencode($this->user) . '@' . $this->host . ':' . $this->port . $this->root . $path;
 		return $url;
+	}
+
+	public function hasUpdated($path, $time) {
+		$storageTime = $this->filemtime($path);
+		$updated = $storageTime > $time;
+		if ($updated) {
+			$req = \OC::$server->get(IRequest::class);
+			if ($req->getHeader('x-debug-updated')) {
+				header("x-debug-updated: '$path' updated $storageTime > $time", false);
+			}
+		}
+		return $updated;
 	}
 }
