@@ -235,7 +235,7 @@ class ProviderFactory implements IProviderFactory {
 				$this->serverContainer->getUserManager(),
 				$this->serverContainer->getLazyRootFolder(),
 				$this->serverContainer->getL10N('circles'),
-				$this->serverContainer->getLogger(),
+				$this->serverContainer->get(LoggerInterface::class),
 				$this->serverContainer->getURLGenerator()
 			);
 		}
