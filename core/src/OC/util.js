@@ -21,10 +21,11 @@
  *
  */
 
-import moment from 'moment'
+import moment from '@nextcloud/moment'
 
 import History from './util-history.js'
-import OC from './index.js'
+import logger from './logger.js'
+import { getLanguage } from '@nextcloud/l10n'
 import { formatFileSize as humanFileSize } from '@nextcloud/files'
 
 /**
@@ -74,7 +75,7 @@ export default {
 	 * Inspired by computerFileSize in helper.php
 	 *
 	 * @param  {string} string file size in human-readable format
-	 * @return {number} or null if string could not be parsed
+	 * @return {number|null} or null if string could not be parsed
 	 *
 	 *
 	 */
@@ -124,7 +125,7 @@ export default {
 	 */
 	formatDate(timestamp, format) {
 		if (window.TESTING === undefined) {
-			OC.debug && console.warn('OC.Util.formatDate is deprecated and will be removed in Nextcloud 21. See @nextcloud/moment')
+			logger.warn('OC.Util.formatDate is deprecated and will be removed in Nextcloud 21. See @nextcloud/moment')
 		}
 		format = format || 'LLL'
 		return moment(timestamp).format(format)
@@ -136,7 +137,7 @@ export default {
 	 */
 	relativeModifiedDate(timestamp) {
 		if (window.TESTING === undefined) {
-			OC.debug && console.warn('OC.Util.relativeModifiedDate is deprecated and will be removed in Nextcloud 21. See @nextcloud/moment')
+			logger.warn('OC.Util.relativeModifiedDate is deprecated and will be removed in Nextcloud 21. See @nextcloud/moment')
 		}
 		const diff = moment().diff(moment(timestamp))
 		if (diff >= 0 && diff < 45000) {
@@ -219,7 +220,7 @@ export default {
 				} else {
 					// Note: This locale setting isn't supported by all browsers but for the ones
 					// that do there will be more consistency between client-server sorting
-					return aa[x].localeCompare(bb[x], OC.getLanguage())
+					return aa[x].localeCompare(bb[x], getLanguage())
 				}
 			}
 		}
