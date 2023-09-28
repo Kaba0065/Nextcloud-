@@ -7,6 +7,7 @@
  * @author Joas Schilling <coding@schilljs.com>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Kate Döen <kate.doeen@nextcloud.com>
+ * @author Private Maker <privatemaker@posteo.net>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -47,15 +48,11 @@ class PersonalSettingsController extends Controller {
 		INavigationManager $navigationManager,
 		ISettingsManager $settingsManager,
 		IUserSession $userSession,
-		IGroupManager $groupManager,
-		ISubAdmin $subAdmin
 	) {
 		parent::__construct($appName, $request);
 		$this->navigationManager = $navigationManager;
 		$this->settingsManager = $settingsManager;
 		$this->userSession = $userSession;
-		$this->subAdmin = $subAdmin;
-		$this->groupManager = $groupManager;
 	}
 
 	/**
@@ -64,7 +61,7 @@ class PersonalSettingsController extends Controller {
 	 * @NoSubAdminRequired
 	 */
 	public function index(string $section): TemplateResponse {
-		return $this->getIndexResponse('personal', $section);
+		return $this->getPersonalResponse($section);
 	}
 
 	/**
