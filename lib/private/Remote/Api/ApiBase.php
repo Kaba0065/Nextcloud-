@@ -22,29 +22,24 @@
  */
 namespace OC\Remote\Api;
 
+use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Remote\ICredentials;
 use OCP\Remote\IInstance;
 
 class ApiBase {
-	/** @var IInstance */
-	private $instance;
-	/** @var ICredentials */
-	private $credentials;
-	/** @var IClientService */
-	private $clientService;
-
-	public function __construct(IInstance $instance, ICredentials $credentials, IClientService $clientService) {
-		$this->instance = $instance;
-		$this->credentials = $credentials;
-		$this->clientService = $clientService;
+	public function __construct(
+		private IInstance $instance,
+		private ICredentials $credentials,
+		private IClientService $clientService,
+	) {
 	}
 
-	protected function getHttpClient() {
+	protected function getHttpClient(): IClient {
 		return $this->clientService->newClient();
 	}
 
-	protected function addDefaultHeaders(array $headers) {
+	protected function addDefaultHeaders(array $headers): array {
 		return array_merge([
 			'OCS-APIREQUEST' => 'true',
 			'Accept' => 'application/json'
@@ -58,9 +53,9 @@ class ApiBase {
 	 * @param array $query
 	 * @param array $headers
 	 * @return resource|string
-	 * @throws \InvalidArgumentException
+	 * @throws \InvalidArgumentException|\Exception
 	 */
-	protected function request($method, $url, array $body = [], array $query = [], array $headers = []) {
+	protected function request(string $method, string $url, array $body = [], array $query = [], array $headers = []) {
 		$fullUrl = trim($this->instance->getFullUrl(), '/') . '/' . $url;
 		$options = [
 			'query' => $query,
@@ -73,25 +68,14 @@ class ApiBase {
 
 		$client = $this->getHttpClient();
 
-		switch ($method) {
-			case 'get':
-				$response = $client->get($fullUrl, $options);
-				break;
-			case 'post':
-				$response = $client->post($fullUrl, $options);
-				break;
-			case 'put':
-				$response = $client->put($fullUrl, $options);
-				break;
-			case 'delete':
-				$response = $client->delete($fullUrl, $options);
-				break;
-			case 'options':
-				$response = $client->options($fullUrl, $options);
-				break;
-			default:
-				throw new \InvalidArgumentException('Invalid method ' . $method);
-		}
+		$response = match ($method) {
+			'get' => $client->get($fullUrl, $options),
+			'post' => $client->post($fullUrl, $options),
+			'put' => $client->put($fullUrl, $options),
+			'delete' => $client->delete($fullUrl, $options),
+			'options' => $client->options($fullUrl, $options),
+			default => throw new \InvalidArgumentException('Invalid method ' . $method),
+		};
 
 		return $response->getBody();
 	}

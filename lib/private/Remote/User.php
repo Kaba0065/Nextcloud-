@@ -38,102 +38,94 @@ class User implements IUser {
 		'quota'
 	];
 
-	/** @var array */
-	private $data;
-
-	public function __construct(array $data) {
-		$this->data = $data;
+	public function __construct(
+		private array $data,
+	) {
 	}
 
 
-	/**
-	 * @return string
-	 */
-	public function getUserId() {
+	public function getUserId(): string {
 		return $this->data['id'];
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getEmail() {
+	public function getEmail(): string {
 		return $this->data['email'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getDisplayName() {
+	public function getDisplayName(): string {
 		return $this->data['displayname'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPhone() {
+	public function getPhone(): string {
 		return $this->data['phone'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getAddress() {
+	public function getAddress(): string {
 		return $this->data['address'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getWebsite() {
+	public function getWebsite(): string {
 		return $this->data['website'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getTwitter() {
+	public function getTwitter(): string {
 		return isset($this->data['twitter']) ? $this->data['twitter'] : '';
 	}
 
 	/**
 	 * @return string[]
 	 */
-	public function getGroups() {
+	public function getGroups(): array {
 		return $this->data['groups'];
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getLanguage() {
+	public function getLanguage(): string {
 		return $this->data['language'];
 	}
 
 	/**
-	 * @return int
+	 * @return int|float
 	 */
-	public function getUsedSpace() {
+	public function getUsedSpace(): int|float {
 		return $this->data['quota']['used'];
 	}
 
 	/**
-	 * @return int
+	 * @return int|float
 	 */
-	public function getFreeSpace() {
+	public function getFreeSpace(): int|float {
 		return $this->data['quota']['free'];
 	}
 
 	/**
-	 * @return int
+	 * @return int|float
 	 */
-	public function getTotalSpace() {
+	public function getTotalSpace(): int|float {
 		return $this->data['quota']['total'];
 	}
 
 	/**
-	 * @return int
+	 * @return int|float
 	 */
-	public function getQuota() {
+	public function getQuota(): int|float {
 		return $this->data['quota']['quota'];
 	}
 }
