@@ -268,7 +268,7 @@ class AccountManager implements IAccountManager {
 		$query = $this->connection->getQueryBuilder();
 		$query->delete($this->table)
 			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
-			->execute();
+			->executeStatement();
 
 		$this->deleteUserData($user);
 	}
@@ -281,7 +281,7 @@ class AccountManager implements IAccountManager {
 		$query = $this->connection->getQueryBuilder();
 		$query->delete($this->dataTable)
 			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
-			->execute();
+			->executeStatement();
 	}
 
 	/**

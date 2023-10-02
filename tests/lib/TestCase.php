@@ -334,7 +334,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	 */
 	protected static function tearDownAfterClassCleanShares(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('share')
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -344,7 +344,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	 */
 	protected static function tearDownAfterClassCleanStorages(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('storages')
-			->execute();
+			->executeStatement();
 	}
 
 	/**
@@ -354,7 +354,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase {
 	 */
 	protected static function tearDownAfterClassCleanFileCache(IQueryBuilder $queryBuilder) {
 		$queryBuilder->delete('filecache')
-			->execute();
+			->executeStatement();
 	}
 
 	/**
