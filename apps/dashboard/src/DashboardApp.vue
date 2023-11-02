@@ -12,46 +12,21 @@
 		<Draggable v-model="layout"
 			class="panels"
 			v-bind="{swapThreshold: 0.30, delay: 500, delayOnTouchOnly: true, touchStartThreshold: 3}"
-			handle=".panel--header"
+			handle=".panel__header"
 			@end="saveLayout">
-			<template v-for="panelId in layout">
-				<div v-if="isApiWidgetV2(panels[panelId].id)"
-					:key="`${panels[panelId].id}-v2`"
-					class="panel">
-					<div class="panel--header">
-						<h2>
-							<span :aria-labelledby="`panel-${panels[panelId].id}--header--icon--description`"
-								aria-hidden="true"
-								:class="apiWidgets[panels[panelId].id].icon_class"
-								role="img" />
-							{{ apiWidgets[panels[panelId].id].title }}
-						</h2>
-						<span :id="`panel-${panels[panelId].id}--header--icon--description`" class="hidden-visually">
-							{{ t('dashboard', '"{title} icon"', { title: apiWidgets[panels[panelId].id].title }) }}
-						</span>
-					</div>
-					<div class="panel--content">
-						<ApiDashboardWidget :widget="apiWidgets[panels[panelId].id]"
-							:data="apiWidgetItems[panels[panelId].id]"
-							:loading="loadingItems" />
-					</div>
+			<div v-for="panelId in layout" :key="panels[panelId].id" class="panel">
+				<h2 class="panel__header">
+					<span aria-hidden="true" class="panel__header-icon" :class="getWidgetIconClass(panels[panelId])" />
+					{{ getWidgetTitle(panels[panelId]) }}
+				</h2>
+				<div class="panel__content" :class="{ loading: !isApiWidgetV2(panels[panelId].id) && !panels[panelId].mounted }">
+					<ApiDashboardWidget v-if="isApiWidgetV2(panels[panelId].id)"
+						:widget="apiWidgets[panels[panelId].id]"
+						:data="apiWidgetItems[panels[panelId].id]"
+						:loading="loadingItems" />
+					<div v-else :ref="panels[panelId].id" :data-id="panels[panelId].id" />
 				</div>
-				<div v-else :key="panels[panelId].id" class="panel">
-					<div class="panel--header">
-						<h2>
-							<span :aria-labelledby="`panel-${panels[panelId].id}--header--icon--description`"
-								aria-hidden="true"
-								:class="panels[panelId].iconClass"
-								role="img" />
-							{{ panels[panelId].title }}
-						</h2>
-						<span :id="`panel-${panels[panelId].id}--header--icon--description`" class="hidden-visually"> {{ t('dashboard', '"{title} icon"', { title: panels[panelId].title }) }} </span>
-					</div>
-					<div class="panel--content" :class="{ loading: !panels[panelId].mounted }">
-						<div :ref="panels[panelId].id" :data-id="panels[panelId].id" />
-					</div>
-				</div>
-			</template>
+			</div>
 		</Draggable>
 
 		<div class="footer">
@@ -443,6 +418,7 @@ export default {
 				this.loadingItems = false
 			}
 		},
+
 		isApiWidgetV2(id) {
 			for (const widget of Object.values(this.apiWidgets)) {
 				if (widget.id === id && widget.item_api_versions.includes(2)) {
@@ -450,6 +426,14 @@ export default {
 				}
 			}
 			return false
+		},
+
+		getWidgetIconClass(panel) {
+			return this.isApiWidgetV2(panel.id) ? this.apiWidgets[panel.id].icon_class : panel.iconClass
+		},
+
+		getWidgetTitle(panel) {
+			return this.isApiWidgetV2(panel.id) ? this.apiWidgets[panel.id].title : panel.title
 		},
 	},
 }
@@ -484,15 +468,17 @@ export default {
 	flex-wrap: wrap;
 }
 
-.panel, .panels > div {
+.panel {
 	width: 320px;
 	max-width: 100%;
-	margin: 16px;
+	margin: calc(var(--default-grid-baseline) * 4);
 	align-self: stretch;
 	background-color: var(--color-main-background-blur);
 	-webkit-backdrop-filter: var(--filter-background-blur);
 	backdrop-filter: var(--filter-background-blur);
 	border-radius: var(--border-radius-rounded);
+
+	padding: calc(var(--default-grid-baseline) * 4);
 
 	#body-user.theme--highcontrast & {
 		border: 2px solid var(--color-border);
@@ -502,58 +488,35 @@ export default {
 		 opacity: 0.1;
 	}
 
-	& > .panel--header {
+	&__header {
 		display: flex;
-		z-index: 1;
-		top: 50px;
-		padding: 16px;
+		align-items: flex-end;
+		margin: 0;
+		padding: calc(var(--default-grid-baseline) * 4) calc(var(--default-grid-baseline) * 2);
+		line-height: 24px;
+		height: 56px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 		cursor: grab;
-
-		&, ::v-deep * {
-			-webkit-touch-callout: none;
-			-webkit-user-select: none;
-			-khtml-user-select: none;
-			-moz-user-select: none;
-			-ms-user-select: none;
-			user-select: none;
-		}
-
-		&:active {
-			cursor: grabbing;
-		}
-
-		a {
-			flex-grow: 1;
-		}
-
-		> h2 {
-			display: block;
-			align-items: center;
-			flex-grow: 1;
-			margin: 0;
-			font-size: 20px;
-			line-height: 24px;
-			font-weight: bold;
-			padding: 16px 8px;
-			height: 56px;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			cursor: grab;
-			span {
-				background-size: 32px;
-				width: 32px;
-				height: 32px;
-				margin-right: 16px;
-				background-position: center;
-				float: left;
-				margin-top: -6px;
-			}
-		}
+		-webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
 	}
 
-	& > .panel--content {
-		margin: 0 16px 16px 16px;
+	&__header-icon {
+		background-position: center;
+		background-size: 32px;
+		background-repeat: no-repeat;
+		height: 32px;
+		width: 32px;
+		margin-right: 16px;
+	}
+
+	&__content {
 		height: 424px;
 		// We specifically do not want scrollbars inside widgets
 		overflow: visible;
@@ -561,7 +524,7 @@ export default {
 
 	// No need to extend height of widgets if only one column is shown
 	@media only screen and (max-width: 709px) {
-		& > .panel--content {
+		&__content {
 			height: auto;
 		}
 	}
