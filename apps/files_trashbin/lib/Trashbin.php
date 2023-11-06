@@ -53,10 +53,12 @@ use OC\Files\ObjectStore\ObjectStoreStorage;
 use OC\Files\View;
 use OCA\Files_Trashbin\AppInfo\Application;
 use OCA\Files_Trashbin\Command\Expire;
+use OCA\Files_Trashbin\Exceptions\CopyRecursiveException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\Files\InvalidPathException;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\IConfig;
@@ -66,7 +68,7 @@ use Psr\Log\LoggerInterface;
 
 class Trashbin {
 	// unit: percentage; 50% of available disk space/quota
-	public const DEFAULTMAXSIZE = 50;
+	public const DEFAULT_MAX_SIZE = 50;
 
 	/**
 	 * Ensure we don't need to scan the file during the move to trash
@@ -74,7 +76,7 @@ class Trashbin {
 	 *
 	 * @param array $params
 	 */
-	public static function ensureFileScannedHook($params) {
+	public static function ensureFileScannedHook(array $params): void {
 		try {
 			self::getUidAndFilename($params['path']);
 		} catch (NotFoundException $e) {
@@ -88,9 +90,8 @@ class Trashbin {
 	 *
 	 * @param string $filename
 	 * @return array
-	 * @throws \OC\User\NoUserException
 	 */
-	public static function getUidAndFilename($filename) {
+	public static function getUidAndFilename(string $filename): array {
 		$uid = Filesystem::getOwner($filename);
 		$userManager = \OC::$server->getUserManager();
 		// if the user with the UID doesn't exists, e.g. because the UID points
@@ -122,7 +123,7 @@ class Trashbin {
 	 * @param string $user
 	 * @return array (filename => array (timestamp => original location))
 	 */
-	public static function getLocations($user) {
+	public static function getLocations(string $user): array {
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->select('id', 'timestamp', 'location')
 			->from('files_trash')
@@ -146,9 +147,9 @@ class Trashbin {
 	 * @param string $user
 	 * @param string $filename
 	 * @param string $timestamp
-	 * @return string original location
+	 * @return bool|string original location
 	 */
-	public static function getLocation($user, $filename, $timestamp) {
+	public static function getLocation($user, $filename, $timestamp): bool|string {
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->select('location')
 			->from('files_trash')
@@ -167,7 +168,10 @@ class Trashbin {
 		}
 	}
 
-	private static function setUpTrash($user) {
+	/**
+	 * @param string $user
+	 */
+	private static function setUpTrash(string $user): void {
 		$view = new View('/' . $user);
 		if (!$view->is_dir('files_trashbin')) {
 			$view->mkdir('files_trashbin');
@@ -183,17 +187,18 @@ class Trashbin {
 		}
 	}
 
-
 	/**
 	 * copy file to owners trash
 	 *
 	 * @param string $sourcePath
 	 * @param string $owner
 	 * @param string $targetPath
-	 * @param $user
+	 * @param string $user
 	 * @param int $timestamp
+	 * @throws CopyRecursiveException
+	 * @throws InvalidPathException
 	 */
-	private static function copyFilesToUser($sourcePath, $owner, $targetPath, $user, $timestamp) {
+	private static function copyFilesToUser(string $sourcePath, string $owner, string $targetPath, string $user, int $timestamp): void {
 		self::setUpTrash($owner);
 
 		$targetFilename = basename($targetPath);
@@ -227,16 +232,16 @@ class Trashbin {
 		}
 	}
 
-
 	/**
 	 * move file to the trash bin
 	 *
 	 * @param string $file_path path to the deleted file/directory relative to the files root directory
 	 * @param bool $ownerOnly delete for owner only (if file gets moved out of a shared folder)
-	 *
 	 * @return bool
+	 * @throws CopyRecursiveException
+	 * @throws InvalidPathException
 	 */
-	public static function move2trash($file_path, $ownerOnly = false) {
+	public static function move2trash($file_path, $ownerOnly = false): bool {
 		// get the user for which the filesystem is setup
 		$root = Filesystem::getRoot();
 		[, $user] = explode('/', $root);
@@ -397,24 +402,27 @@ class Trashbin {
 	 * @param string $owner owner user id
 	 * @param string $ownerPath path relative to the owner's home storage
 	 * @param int $timestamp when the file was deleted
+	 * @throws CopyRecursiveException
 	 */
-	private static function retainVersions($filename, $owner, $ownerPath, $timestamp) {
-		if (\OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions') && !empty($ownerPath)) {
-			$user = OC_User::getUser();
-			$rootView = new View('/');
+	private static function retainVersions($filename, $owner, $ownerPath, $timestamp): void {
+		if (!\OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions') || empty($ownerPath)) {
+			return;
+		}
 
-			if ($rootView->is_dir($owner . '/files_versions/' . $ownerPath)) {
+		$user = OC_User::getUser();
+		$rootView = new View('/');
+
+		if ($rootView->is_dir($owner . '/files_versions/' . $ownerPath)) {
+			if ($owner !== $user) {
+				self::copy_recursive($owner . '/files_versions/' . $ownerPath, $owner . '/files_trashbin/versions/' . static::getTrashFilename(basename($ownerPath), $timestamp), $rootView);
+			}
+			self::move($rootView, $owner . '/files_versions/' . $ownerPath, $user . '/files_trashbin/versions/' . static::getTrashFilename($filename, $timestamp));
+		} elseif ($versions = \OCA\Files_Versions\Storage::getVersions($owner, $ownerPath)) {
+			foreach ($versions as $v) {
 				if ($owner !== $user) {
-					self::copy_recursive($owner . '/files_versions/' . $ownerPath, $owner . '/files_trashbin/versions/' . static::getTrashFilename(basename($ownerPath), $timestamp), $rootView);
+					self::copy($rootView, $owner . '/files_versions' . $v['path'] . '.v' . $v['version'], $owner . '/files_trashbin/versions/' . static::getTrashFilename($v['name'] . '.v' . $v['version'], $timestamp));
 				}
-				self::move($rootView, $owner . '/files_versions/' . $ownerPath, $user . '/files_trashbin/versions/' . static::getTrashFilename($filename, $timestamp));
-			} elseif ($versions = \OCA\Files_Versions\Storage::getVersions($owner, $ownerPath)) {
-				foreach ($versions as $v) {
-					if ($owner !== $user) {
-						self::copy($rootView, $owner . '/files_versions' . $v['path'] . '.v' . $v['version'], $owner . '/files_trashbin/versions/' . static::getTrashFilename($v['name'] . '.v' . $v['version'], $timestamp));
-					}
-					self::move($rootView, $owner . '/files_versions' . $v['path'] . '.v' . $v['version'], $user . '/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v['version'], $timestamp));
-				}
+				self::move($rootView, $owner . '/files_versions' . $v['path'] . '.v' . $v['version'], $user . '/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v['version'], $timestamp));
 			}
 		}
 	}
@@ -470,10 +478,10 @@ class Trashbin {
 	 * including the timestamp suffix ".d12345678"
 	 * @param string $filename name of the file/folder
 	 * @param int $timestamp time when the file/folder was deleted
-	 *
 	 * @return bool true on success, false otherwise
+	 * @throws NotPermittedException
 	 */
-	public static function restore($file, $filename, $timestamp) {
+	public static function restore($file, $filename, $timestamp): bool {
 		$user = OC_User::getUser();
 		$view = new View('/' . $user);
 
@@ -546,44 +554,48 @@ class Trashbin {
 	 * @param int $timestamp deletion time
 	 * @return false|null
 	 */
-	private static function restoreVersions(View $view, $file, $filename, $uniqueFilename, $location, $timestamp) {
-		if (\OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions')) {
-			$user = OC_User::getUser();
-			$rootView = new View('/');
+	private static function restoreVersions(View $view, $file, $filename, $uniqueFilename, $location, $timestamp): ?bool {
+		if (! \OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions')) {
+			return null;
+		}
 
-			$target = Filesystem::normalizePath('/' . $location . '/' . $uniqueFilename);
+		$user = OC_User::getUser();
+		$rootView = new View('/');
 
-			[$owner, $ownerPath] = self::getUidAndFilename($target);
+		$target = Filesystem::normalizePath('/' . $location . '/' . $uniqueFilename);
 
-			// file has been deleted in between
-			if (empty($ownerPath)) {
-				return false;
-			}
+		[$owner, $ownerPath] = self::getUidAndFilename($target);
 
-			if ($timestamp) {
-				$versionedFile = $filename;
-			} else {
-				$versionedFile = $file;
-			}
+		// file has been deleted in between
+		if (empty($ownerPath)) {
+			return false;
+		}
 
-			if ($view->is_dir('/files_trashbin/versions/' . $file)) {
-				$rootView->rename(Filesystem::normalizePath($user . '/files_trashbin/versions/' . $file), Filesystem::normalizePath($owner . '/files_versions/' . $ownerPath));
-			} elseif ($versions = self::getVersionsFromTrash($versionedFile, $timestamp, $user)) {
-				foreach ($versions as $v) {
-					if ($timestamp) {
-						$rootView->rename($user . '/files_trashbin/versions/' . static::getTrashFilename($versionedFile . '.v' . $v, $timestamp), $owner . '/files_versions/' . $ownerPath . '.v' . $v);
-					} else {
-						$rootView->rename($user . '/files_trashbin/versions/' . $versionedFile . '.v' . $v, $owner . '/files_versions/' . $ownerPath . '.v' . $v);
-					}
+		if ($timestamp) {
+			$versionedFile = $filename;
+		} else {
+			$versionedFile = $file;
+		}
+
+		if ($view->is_dir('/files_trashbin/versions/' . $file)) {
+			$rootView->rename(Filesystem::normalizePath($user . '/files_trashbin/versions/' . $file), Filesystem::normalizePath($owner . '/files_versions/' . $ownerPath));
+		} elseif ($versions = self::getVersionsFromTrash($versionedFile, $timestamp, $user)) {
+			foreach ($versions as $v) {
+				if ($timestamp) {
+					$rootView->rename($user . '/files_trashbin/versions/' . static::getTrashFilename($versionedFile . '.v' . $v, $timestamp), $owner . '/files_versions/' . $ownerPath . '.v' . $v);
+				} else {
+					$rootView->rename($user . '/files_trashbin/versions/' . $versionedFile . '.v' . $v, $owner . '/files_versions/' . $ownerPath . '.v' . $v);
 				}
 			}
 		}
+
+		return null;
 	}
 
 	/**
 	 * delete all files from the trash
 	 */
-	public static function deleteAll() {
+	public static function deleteAll(): bool {
 		$user = OC_User::getUser();
 		$userRoot = \OC::$server->getUserFolder($user)->getParent();
 		$view = new View('/' . $user);
@@ -637,7 +649,7 @@ class Trashbin {
 	 *
 	 * @param string $path
 	 */
-	protected static function emitTrashbinPreDelete($path) {
+	protected static function emitTrashbinPreDelete($path): void {
 		\OC_Hook::emit('\OCP\Trashbin', 'preDelete', ['path' => $path]);
 	}
 
@@ -646,7 +658,7 @@ class Trashbin {
 	 *
 	 * @param string $path
 	 */
-	protected static function emitTrashbinPostDelete($path) {
+	protected static function emitTrashbinPostDelete($path): void {
 		\OC_Hook::emit('\OCP\Trashbin', 'delete', ['path' => $path]);
 	}
 
@@ -655,11 +667,13 @@ class Trashbin {
 	 *
 	 * @param string $filename path to the file
 	 * @param string $user
-	 * @param int $timestamp of deletion time
-	 *
+	 * @param null $timestamp of deletion time
 	 * @return int|float size of deleted files
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
+	 * @throws NotPermittedException
 	 */
-	public static function delete($filename, $user, $timestamp = null) {
+	public static function delete($filename, $user, $timestamp = null): float|int {
 		$userRoot = \OC::$server->getUserFolder($user)->getParent();
 		$view = new View('/' . $user);
 		$size = 0;
@@ -699,28 +713,35 @@ class Trashbin {
 	}
 
 	/**
+	 * @param View $view
 	 * @param string $file
 	 * @param string $filename
 	 * @param ?int $timestamp
+	 * @param string $user
+	 * @return int|float
 	 */
 	private static function deleteVersions(View $view, $file, $filename, $timestamp, string $user): int|float {
 		$size = 0;
-		if (\OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions')) {
-			if ($view->is_dir('files_trashbin/versions/' . $file)) {
-				$size += self::calculateSize(new View('/' . $user . '/files_trashbin/versions/' . $file));
-				$view->unlink('files_trashbin/versions/' . $file);
-			} elseif ($versions = self::getVersionsFromTrash($filename, $timestamp, $user)) {
-				foreach ($versions as $v) {
-					if ($timestamp) {
-						$size += $view->filesize('/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v, $timestamp));
-						$view->unlink('/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v, $timestamp));
-					} else {
-						$size += $view->filesize('/files_trashbin/versions/' . $filename . '.v' . $v);
-						$view->unlink('/files_trashbin/versions/' . $filename . '.v' . $v);
-					}
+
+		if (! \OCP\Server::get(IAppManager::class)->isEnabledForUser('files_versions')) {
+			return $size;
+		}
+
+		if ($view->is_dir('files_trashbin/versions/' . $file)) {
+			$size += self::calculateSize(new View('/' . $user . '/files_trashbin/versions/' . $file));
+			$view->unlink('files_trashbin/versions/' . $file);
+		} elseif ($versions = self::getVersionsFromTrash($filename, $timestamp, $user)) {
+			foreach ($versions as $v) {
+				if ($timestamp) {
+					$size += $view->filesize('/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v, $timestamp));
+					$view->unlink('/files_trashbin/versions/' . static::getTrashFilename($filename . '.v' . $v, $timestamp));
+				} else {
+					$size += $view->filesize('/files_trashbin/versions/' . $filename . '.v' . $v);
+					$view->unlink('/files_trashbin/versions/' . $filename . '.v' . $v);
 				}
 			}
 		}
+
 		return $size;
 	}
 
@@ -749,7 +770,7 @@ class Trashbin {
 	 * @param string $uid id of deleted user
 	 * @return bool result of db delete operation
 	 */
-	public static function deleteUser($uid) {
+	public static function deleteUser($uid): bool {
 		$query = \OC::$server->getDatabaseConnection()->getQueryBuilder();
 		$query->delete('files_trash')
 			->where($query->expr()->eq('user', $query->createNamedParameter($uid)));
@@ -762,6 +783,8 @@ class Trashbin {
 	 * @param int|float $trashbinSize current size of the trash bin
 	 * @param string $user
 	 * @return int|float available free space for trash bin
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
 	 */
 	private static function calculateFreeSpace(int|float $trashbinSize, string $user): int|float {
 		$configuredTrashbinSize = static::getConfiguredTrashbinSize($user);
@@ -799,7 +822,7 @@ class Trashbin {
 			}
 			$free = $quota - $userFolder->getSize(false); // remaining free space for user
 			if ($free > 0) {
-				$availableSpace = ($free * self::DEFAULTMAXSIZE / 100) - $trashbinSize; // how much space can be used for versions
+				$availableSpace = ($free * self::DEFAULT_MAX_SIZE / 100) - $trashbinSize; // how much space can be used for versions
 			} else {
 				$availableSpace = $free - $trashbinSize;
 			}
@@ -814,8 +837,10 @@ class Trashbin {
 	 * resize trash bin if necessary after a new file was added to Nextcloud
 	 *
 	 * @param string $user user id
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
 	 */
-	public static function resizeTrash($user) {
+	public static function resizeTrash($user): void {
 		$size = self::getTrashbinSize($user);
 
 		$freeSpace = self::calculateFreeSpace($size, $user);
@@ -829,8 +854,11 @@ class Trashbin {
 	 * clean up the trash bin
 	 *
 	 * @param string $user
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
+	 * @throws NotPermittedException
 	 */
-	public static function expire($user) {
+	public static function expire($user): void {
 		$trashBinSize = self::getTrashbinSize($user);
 		$availableSpace = self::calculateFreeSpace($trashBinSize, $user);
 
@@ -848,7 +876,7 @@ class Trashbin {
 	/**
 	 * @param string $user
 	 */
-	private static function scheduleExpire($user) {
+	private static function scheduleExpire($user): void {
 		// let the admin disable auto expire
 		/** @var Application $application */
 		$application = \OC::$server->query(Application::class);
@@ -866,6 +894,9 @@ class Trashbin {
 	 * @param string $user
 	 * @param int|float $availableSpace available disc space
 	 * @return int|float size of deleted files
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
+	 * @throws NotPermittedException
 	 */
 	protected static function deleteFiles(array $files, string $user, int|float $availableSpace): int|float {
 		/** @var Application $application */
@@ -894,8 +925,10 @@ class Trashbin {
 	 * @param array $files list of files sorted by mtime
 	 * @param string $user
 	 * @return array{int|float, int} size of deleted files and number of deleted files
+	 * @throws InvalidPathException
+	 * @throws NotFoundException
 	 */
-	public static function deleteExpiredFiles($files, $user) {
+	public static function deleteExpiredFiles($files, $user): array {
 		/** @var Expiration $expiration */
 		$expiration = \OC::$server->query(Expiration::class);
 		$size = 0;
@@ -970,6 +1003,8 @@ class Trashbin {
 	 *
 	 * @param string $filename name of the file which should be restored
 	 * @param int $timestamp timestamp when the file was deleted
+	 * @param string $user
+	 * @return array
 	 */
 	private static function getVersionsFromTrash($filename, $timestamp, string $user): array {
 		$view = new View('/' . $user . '/files_trashbin/versions');
@@ -1036,7 +1071,7 @@ class Trashbin {
 	 * @param View $view filesystem view relative to users root directory
 	 * @return string with unique extension
 	 */
-	private static function getUniqueFilename($location, $filename, View $view) {
+	private static function getUniqueFilename($location, $filename, View $view): string {
 		$ext = pathinfo($filename, PATHINFO_EXTENSION);
 		$name = pathinfo($filename, PATHINFO_FILENAME);
 		$l = \OC::$server->getL10N('files_trashbin');
@@ -1111,7 +1146,7 @@ class Trashbin {
 	 * @param string $user
 	 * @return bool
 	 */
-	public static function isEmpty($user) {
+	public static function isEmpty($user): bool {
 		$view = new View('/' . $user . '/files_trashbin');
 		if ($view->is_dir('/files') && $dh = $view->opendir('/files')) {
 			while ($file = readdir($dh)) {
@@ -1124,10 +1159,10 @@ class Trashbin {
 	}
 
 	/**
-	 * @param $path
+	 * @param string $path
 	 * @return string
 	 */
-	public static function preview_icon($path) {
+	public static function preview_icon($path): string {
 		return \OC::$server->getURLGenerator()->linkToRoute('core_ajax_trashbin_preview', ['x' => 32, 'y' => 32, 'file' => $path]);
 	}
 
