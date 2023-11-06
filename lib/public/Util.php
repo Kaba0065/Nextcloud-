@@ -48,6 +48,7 @@ namespace OCP;
 
 use OC\AppScriptDependency;
 use OC\AppScriptSort;
+use OCP\L10N\IFactory;
 use bantu\IniGetWrapper\IniGetWrapper;
 use OCP\Share\IManager;
 use Psr\Container\ContainerExceptionInterface;
@@ -237,7 +238,7 @@ class Util {
 	 */
 	public static function addTranslations($application, $languageCode = null) {
 		if (is_null($languageCode)) {
-			$languageCode = \OC::$server->getL10NFactory()->findLanguage($application);
+			$languageCode = \OC::$server->get(IFactory::class)->findLanguage($application);
 		}
 		if (!empty($application)) {
 			$path = "$application/l10n/$languageCode";
