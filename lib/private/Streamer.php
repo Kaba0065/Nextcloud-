@@ -44,7 +44,7 @@ class Streamer {
 	private array $preferTarFor = [ '/macintosh|mac os x/i' ];
 
 	// streamer instance
-	private $streamerInstance;
+	private ZipStreamer|TarStreamer $streamerInstance;
 
 	/**
 	 * Streamer constructor.
@@ -92,9 +92,10 @@ class Streamer {
 
 	/**
 	 * Send HTTP headers
+	 *
 	 * @param string $name
 	 */
-	public function sendHeaders($name) {
+	public function sendHeaders(string $name): void {
 		header('X-Accel-Buffering: no');
 		$extension = $this->streamerInstance instanceof ZipStreamer ? '.zip' : '.tar';
 		$fullName = $name . $extension;
@@ -181,7 +182,7 @@ class Streamer {
 	 * @param string $dirName Directory Path and name to be added to the archive.
 	 * @return bool $success
 	 */
-	public function addEmptyDir($dirName) {
+	public function addEmptyDir(string $dirName): bool {
 		return $this->streamerInstance->addEmptyDir($dirName);
 	}
 
@@ -191,7 +192,7 @@ class Streamer {
 	 * closing, the file is completely written to the output stream.
 	 * @return bool $success
 	 */
-	public function finalize() {
+	public function finalize(): bool {
 		return $this->streamerInstance->finalize();
 	}
 }
