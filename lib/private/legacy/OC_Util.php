@@ -71,6 +71,7 @@ use OCP\IConfig;
 use OCP\IGroupManager;
 use OCP\IURLGenerator;
 use OCP\IUser;
+use OCP\Security\ISecureRandom;
 use OCP\Share\IManager;
 use Psr\Log\LoggerInterface;
 
@@ -519,7 +520,7 @@ class OC_Util {
 			\OC::$server->getL10N('lib'),
 			\OC::$server->get(\OCP\Defaults::class),
 			\OC::$server->get(LoggerInterface::class),
-			\OC::$server->getSecureRandom(),
+			\OC::$server->get(ISecureRandom::class),
 			\OC::$server->get(\OC\Installer::class)
 		);
 
@@ -846,7 +847,7 @@ class OC_Util {
 		$id = \OC::$server->getSystemConfig()->getValue('instanceid', null);
 		if (is_null($id)) {
 			// We need to guarantee at least one letter in instanceid so it can be used as the session_name
-			$id = 'oc' . \OC::$server->getSecureRandom()->generate(10, \OCP\Security\ISecureRandom::CHAR_LOWER.\OCP\Security\ISecureRandom::CHAR_DIGITS);
+			$id = 'oc' . \OC::$server->get(ISecureRandom::class)->generate(10, \OCP\Security\ISecureRandom::CHAR_LOWER.\OCP\Security\ISecureRandom::CHAR_DIGITS);
 			\OC::$server->getSystemConfig()->setValue('instanceid', $id);
 		}
 		return $id;
