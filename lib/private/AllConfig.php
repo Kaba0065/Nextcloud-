@@ -70,7 +70,7 @@ class AllConfig implements IConfig {
 	 */
 	private CappedMemoryCache $userCache;
 
-	public function __construct(SystemConfig $systemConfig) { //, IEventDispatcher $dispatcher) {
+	public function __construct(SystemConfig $systemConfig) {
 		$this->userCache = new CappedMemoryCache();
 		$this->systemConfig = $systemConfig;
 	}
