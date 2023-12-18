@@ -100,7 +100,7 @@ class VerificationToken implements IVerificationToken {
 	public function create(
 		IUser $user,
 		string $subject,
-		string $passwordPrefix = ''
+		string $passwordPrefix = '',
 	): string {
 		$token = $this->secureRandom->generate(
 			21,
