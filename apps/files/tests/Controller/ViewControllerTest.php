@@ -168,7 +168,7 @@ class ViewControllerTest extends TestCase {
 				[$this->user->getUID(), 'files', 'crop_image_previews', true, true],
 				[$this->user->getUID(), 'files', 'show_grid', true],
 			]);
-		
+
 		$baseFolderFiles = $this->getMockBuilder(Folder::class)->getMock();
 
 		$this->rootFolder->expects($this->any())
