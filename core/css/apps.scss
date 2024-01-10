@@ -91,13 +91,13 @@ dt,
 dd {
 	display: inline-block;
 	padding: 12px;
-	padding-left: 0;
+	padding-inline-start: 0;
 }
 
 dt {
 	width: 130px;
 	white-space: nowrap;
-	text-align: right;
+	text-align: end;
 }
 
 kbd {
@@ -150,7 +150,7 @@ kbd {
 		box-shadow: none !important;
 		user-select: none;
 		pointer-events:none;
-		margin-left: 10px;
+		margin-inline-start: 10px;
 	}
 }
 
@@ -165,9 +165,8 @@ kbd {
 			display: inline-block;
 			width: 100%;
 			padding: 10px;
-			padding-left: 34px;
-			background-position: 10px center;
-			text-align: left;
+			padding-inline-start: 34px;
+			text-align: start;
 			margin: 0;
 		}
 	}
@@ -211,13 +210,13 @@ kbd {
 
 			> .app-navigation-entry-deleted {
 				/* Ugly hack for overriding the main entry link */
-				padding-left: 44px !important;
+				padding-inline-start: 44px !important;
 			}
 			> .app-navigation-entry-edit {
 				/* Ugly hack for overriding the main entry link */
 				/* align the input correctly with the link text
 				   44px-6px padding for the input */
-				padding-left: 38px !important;
+				padding-inline-start: 38px !important;
 			}
 
 			a:hover,
@@ -248,7 +247,7 @@ kbd {
 
 			/* align loader */
 			&.icon-loading-small:after {
-				left: 22px;
+				inset-inline-start: 22px;
 				top: 22px;
 			}
 
@@ -269,7 +268,7 @@ kbd {
 				> li {
 					display: inline-flex;
 					flex-wrap: wrap;
-					padding-left: 44px;
+					padding-inline-start: 44px;
 					width: 100%;
 					margin-bottom: 3px;
 
@@ -295,21 +294,21 @@ kbd {
 
 					/* align loader */
 					&.icon-loading-small:after {
-						left: 22px; /* 44px / 2 */
+						inset-inline-start: 22px; /* 44px / 2 */
 					}
 
 					> .app-navigation-entry-deleted {
 						/* margin to keep active indicator visible */
-						margin-left: 4px;
-						padding-left: 84px;
+						margin-inline-start: 4px;
+						padding-inline-start: 84px;
 					}
 
 					> .app-navigation-entry-edit {
 						/* margin to keep active indicator visible */
-						margin-left: 4px;
+						margin-inline-start: 4px;
 						/* align the input correctly with the link text
 						44px+44px-4px-6px padding for the input */
-						padding-left: 78px !important;
+						padding-inline-start: 78px !important;
 					}
 				}
 			}
@@ -330,13 +329,13 @@ kbd {
 			/* Main entry link */
 			> a {
 				background-size: 16px 16px;
-				background-position: 14px center;
 				background-repeat: no-repeat;
 				display: block;
 				justify-content: space-between;
 				line-height: 44px;
 				min-height: 44px;
-				padding: 0 12px 0 14px;
+				padding-block: 0;
+				padding-inline: 14px 12px;
 				overflow: hidden;
 				box-sizing: border-box;
 				white-space: nowrap;
@@ -348,13 +347,15 @@ kbd {
 				/* TODO: forbid using img as icon in menu? */
 
 				&.svg {
-					padding: 0 12px 0 44px;
+					padding-block: 0;
+					padding-inline: 44px 12px;
 					:focus-visible {
-						padding: 0 8px 0 42px;
+						padding-block: 0;
+						padding-inline: 42px 8px;
 					}
 				}
 				&:first-child img {
-					margin-right: 11px!important;
+					margin-inline-end: 11px!important;
 					width: 16px;
 					height: 16px;
 					// Legacy invert if bright background
@@ -364,9 +365,9 @@ kbd {
 				/* counter can also be inside the link */
 				> .app-navigation-entry-utils  {
 					display: inline-block;
-					float: right;
+					/* Check Floating fix below */ 
 					.app-navigation-entry-utils-counter {
-						padding-right: 0 !important;
+						padding-inline-end: 0 !important;
 					}
 				}
 			}
@@ -479,7 +480,7 @@ kbd {
 
 		/* force padding on link no matter if 'a' has an icon class */
 		> a:first-child {
-			padding-left: 44px;
+			padding-inline-start: 44px;
 		}
 		&:hover,
 		&:focus {
@@ -535,7 +536,7 @@ kbd {
 		}
 		.app-navigation-entry-utils-counter {
 			overflow: hidden;
-			text-align: right;
+			text-align: end;
 			font-size: 9pt;
 			line-height: 44px;
 			padding: 0 12px; /* Same padding as all li > a in the app-navigation */
@@ -557,8 +558,8 @@ kbd {
 	 * Editable entries
 	 */
 	.app-navigation-entry-edit {
-		padding-left: 5px;
-		padding-right: 5px;
+		padding-inline-start: 5px;
+		padding-inline-end: 5px;
 		display: block;
 		width: calc(100% - 1px); /* Avoid border overlapping */
 		transition: opacity 250ms ease-in-out;
@@ -573,7 +574,7 @@ kbd {
 		}
 		input {
 			padding: 5px;
-			margin-right: 0;
+			margin-inline-end: 0;
 			height: 38px;
 			&:hover,
 			&:focus {
@@ -584,8 +585,8 @@ kbd {
 		input[type='text'] {
 			width: 100%;
 			min-width: 0; /* firefox hack: override auto */
-			border-bottom-right-radius: 0;
-			border-top-right-radius: 0;
+			border-end-end-radius: 0;
+			border-start-end-radius: 0;
 		}
 		button,
 		input:not([type='text']) {
@@ -596,13 +597,13 @@ kbd {
 				border-radius: 0 !important;
 			}
 			&:not(:first-child) {
-				margin-left: -1px;
+				margin-inline-start: -1px;
 			}
 			&:last-child {
-				border-bottom-right-radius: var(--border-radius);
-				border-top-right-radius: var(--border-radius);
-				border-bottom-left-radius: 0;
-				border-top-left-radius: 0;
+				border-end-end-radius: var(--border-radius);
+				border-start-end-radius: var(--border-radius);
+				border-end-start-radius: 0;
+				border-start-start-radius: 0;
 			}
 		}
 	}
@@ -612,7 +613,7 @@ kbd {
 	 */
 	.app-navigation-entry-deleted {
 		display: inline-flex;
-		padding-left: 44px;
+		padding-inline-start: 44px;
 		transform: translateX(#{variables.$navigation-width});
 		.app-navigation-entry-deleted-description {
 			position: relative;
@@ -644,7 +645,7 @@ kbd {
 					opacity 250ms ease-in-out,
 					z-index 250ms ease-in-out;
 		position: absolute;
-		left: 0;
+		inset-inline-start: 0;
 		background-color: var(--color-main-background);
 		box-sizing: border-box;
 	}
@@ -668,6 +669,40 @@ kbd {
 	}
 }
 
+/* Floating and background-position fix */
+/* Cannot use inline-start and :dir to support Samsung Internet */ 
+body[dir='ltr'] {
+	.app-navigation-personal,
+	.app-navigation-administration {
+		.app-navigation-new button {
+			background-position: left 10px center;
+		}
+
+		> ul > li > ul > li > a {
+			background-position: left 14px center;
+
+			> .app-navigation-entry-utils {
+				float: right;
+			}
+		}
+	}
+}
+body[dir='rtl'] {
+	.app-navigation-personal,
+	.app-navigation-administration {
+		.app-navigation-new button {
+			background-position: right 10px center;
+		}
+
+		> ul > li > ul > li > a {
+			background-position: right 14px center;
+
+			> .app-navigation-entry-utils {
+				float: left;
+			}
+		}
+	}
+}
 
 /* CONTENT  --------------------------------------------------------- */
 #content {
@@ -689,14 +724,14 @@ kbd {
 
 @media only screen and (max-width: variables.$breakpoint-mobile) {
 	#content {
-		border-top-left-radius: var(--border-radius-large);
-		border-top-right-radius: var(--border-radius-large);
+		border-start-start-radius: var(--border-radius-large);
+		border-start-end-radius: var(--border-radius-large);
 	}
 	#app-navigation {
-		border-top-left-radius: var(--border-radius-large);
+		border-start-start-radius: var(--border-radius-large);
 	}
 	#app-sidebar {
-		border-top-right-radius: var(--border-radius-large);
+		border-start-end-radius: var(--border-radius-large);
 	}
 }
 
@@ -760,14 +795,14 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 	position: -webkit-sticky;
 	position: sticky;
 	top: variables.$header-height;
-	right:0;
+	inset-inline-end:0;
 	overflow-y: auto;
 	overflow-x: hidden;
 	z-index: 1500;
 	opacity: 0.7px;
 	height: calc(100vh - #{variables.$header-height});
 	background: var(--color-main-background);
-	border-left: 1px solid var(--color-border);
+	border-inline-start: 1px solid var(--color-border);
 	flex-shrink: 0;
 	// no animations possible, use OC.Apps.showAppSidebar
 	&.disappear {
@@ -793,7 +828,7 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 	display: none;
 	padding: calc(var(--default-grid-baseline) * 2);
 	padding-top: 0;
-	padding-left: calc(var(--default-grid-baseline) * 4);
+	padding-inline-start: calc(var(--default-grid-baseline) * 4);
 	/* restrict height of settings and make scrollable */
 	max-height: 300px;
 	overflow-y: auto;
@@ -805,7 +840,8 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 	}
 
 	.info-text {
-		padding: 5px 0 7px 22px;
+		padding-block: 5px 7px;
+		padding-inline: 22px 0;
 		color: var(--color-text-lighter);
 	}
 	input {
@@ -842,7 +878,7 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 		box-shadow: none;
 		border: 0;
 		border-radius: calc(var(--default-clickable-area) / 2);
-		text-align: left;
+		text-align: start;
 		font-weight: normal;
 		font-size: 100%;
 		opacity: 0.8;
@@ -862,23 +898,38 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 
 		&::before {
 			background-image: var(--icon-settings-dark);
-			background-position: 14px center;
 			background-repeat: no-repeat;
 			content: '';
 			width: 44px;
 			height: 44px;
 			top: 0;
-			left: 0;
+			inset-inline-start: 0;
 			display: block;
 		}
 
 		&:focus-visible {
 			box-shadow: 0 0 0 2px inset var(--color-primary-element) !important;
-			background-position: 12px center;
 		}
 	}
 }
 
+/* Background-position fix */
+body[dir='ltr'] #app-settings-header .settings-button {
+	&::before {
+		background-position: left 14px center;
+	}
+	&:focus-visible {
+		background-position: left 12px center;
+	}
+}
+body[dir='rtl'] #app-settings-header .settings-button {
+	&::before {
+		background-position: right 14px center;
+	}
+	&:focus-visible {
+		background-position: right 12px center;
+	}
+}
 /* GENERAL SECTION ------------------------------------------------------------ */
 .section {
 	display: block;
@@ -892,14 +943,14 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 		&[type='checkbox'],
 		&[type='radio'] {
 			vertical-align: -2px;
-			margin-right: 4px;
+			margin-inline-end: 4px;
 		}
 	}
 }
 .sub-section {
 	position: relative;
 	margin-top: 10px;
-	margin-left: 27px;
+	margin-inline-start: 27px;
 	margin-bottom: 10px;
 }
 
@@ -939,10 +990,10 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 
 		/* Use same amount as sidebar padding */
 		&:first-child {
-			padding-left: 15px;
+			padding-inline-start: 15px;
 		}
 		&:last-child {
-			padding-right: 15px;
+			padding-inline-end: 15px;
 		}
 
 		.icon {
@@ -952,7 +1003,7 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 			background-size: 16px;
 			vertical-align: middle;
 			margin-top: -2px;
-			margin-right: 3px;
+			margin-inline-end: 3px;
 			opacity: .7;
 			cursor: pointer;
 		}
@@ -976,10 +1027,17 @@ $min-content-width: variables.$breakpoint-mobile - variables.$navigation-width -
 	}
 }
 .tabsContainer {
-	clear: left;
 	.tab {
 		padding: 0 15px 15px;
 	}
+}
+
+/* Cannot use inline-start to support Samsung Internet*/ 
+body[dir='ltr'] .tabsContainer {
+	clear: left;
+}
+body[dir='rtl'] .tabsContainer {
+	clear: right;
 }
 
 /* POPOVER MENU ------------------------------------------------------------ */
@@ -1022,7 +1080,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 		// = 16px/2 + 14px = 22px
 		// popover right margin is 5px, arrow width is 9px to center and border is 1px
 		// 22px - 9px - 5px - 1px = 7px
-		right: 7px;
+		inset-inline-end: 7px;
 		/* change this to adjust the arrow position */
 		border: solid transparent;
 		content: ' ';
@@ -1037,7 +1095,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 	&.menu-center {
 		transform: translateX(50%);
 		right: 50%;
-		margin-right: 0;
+		margin-inline-end: 0;
 		&:after {
 			right: 50%;
 			transform: translateX(50%);
@@ -1047,7 +1105,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 	&.menu-left {
 		right: auto;
 		left: 0;
-		margin-right: 0;
+		margin-inline-end: 0;
 		&:after {
 			left: 6px;
 			right: auto;
@@ -1114,7 +1172,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 				> input,
 				> form {
 					&:not([class^='icon-']):not([class*='icon-']):first-child {
-						margin-left: $popoveritem-height;
+						margin-inline-start: $popoveritem-height;
 					}
 				}
 			}
@@ -1150,11 +1208,11 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 			}
 			> select {
 				margin: 0;
-				margin-left: 6px;
+				margin-inline-start: 6px;
 			}
 			/* Add padding if contains icon+text */
 			&:not(:empty) {
-				padding-right: $outter-margin !important;
+				padding-inline-end: $outter-margin !important;
 			}
 			/* DEPRECATED! old img in popover fallback
 			 * TODO: to remove */
@@ -1184,13 +1242,13 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 				   if there is an element before */
 				align-items: center;
 				&:not(:first-child)  {
-					margin-left: 5px;
+					margin-inline-start: 5px;
 				}
 			}
 			/* no margin if hidden span before */
 			> span.hidden + form,
 			> span[style*='display:none'] + form {
-				margin-left: 0;
+				margin-inline-start: 0;
 			}
 			/* Inputs inside popover supports text, submit & reset */
 			input {
@@ -1200,7 +1258,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 				flex: 1 1 auto;
 				// space between inline inputs
 				&:not(:first-child) {
-					margin-left: 5px;
+					margin-inline-start: 5px;
 				}
 			}
 		}
@@ -1262,7 +1320,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 	position: -webkit-sticky;
 	position: relative;
 	top: 0;
-	border-right: 1px solid var(--color-border);
+	border-inline-end: 1px solid var(--color-border);
 	display: flex;
 	flex-direction: column;
 	transition: transform 250ms ease-in-out;
@@ -1350,7 +1408,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 			}
 			+ label {
 				top: 14px;
-				left: 7px;
+				inset-inline-start: 7px;
 				// hidden by default, only chown on hover-focus or if checked
 				display: none;
 				&::before {
@@ -1366,7 +1424,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 		.app-content-list-item-star {
 			display: flex;
 			top: 10px;
-			left: 32px;
+			inset-inline-start: 32px;
 			background-size: 16px;
 			height: 20px;
 			width: 20px;
@@ -1382,7 +1440,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 			line-height: 40px;
 			border-radius: 50%;
 			vertical-align: middle;
-			margin-right: 10px;
+			margin-inline-end: 10px;
 			color: #fff;
 			text-align: center;
 			font-size: 1.5em;
@@ -1397,13 +1455,13 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 		.app-content-list-item-line-one,
 		.app-content-list-item-line-two {
 			display: block;
-			padding-left: 50px;
+			padding-inline-start: 50px;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			order: 1;
 			flex: 1 1 0px;
-			padding-right: 10px;
+			padding-inline-end: 10px;
 			cursor: pointer;
 		}
 
@@ -1432,7 +1490,7 @@ $outter-margin: math.div($popoveritem-height - $popovericon-size, 2);
 				margin: 0;
 				// action icon have -7px margin
 				// default popover is normally 5px
-				right: -2px;
+				inset-inline-end: -2px;
 			}
 		}
 	}
