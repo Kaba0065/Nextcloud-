@@ -36,6 +36,7 @@ use OCP\Files\IRootFolder;
 use OCP\Files\Mount\IMountPoint;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
+use OCP\IUser;
 use OCP\Share\IShare;
 use OCP\Util;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -166,6 +167,18 @@ class FileUtils {
 			default:
 				return "Unknown (" . $share->getShareType() . ")";
 		}
+	}
+
+	/**
+	 * @param IUser $user
+	 * @return IMountPoint[]
+	 */
+	public function getMountsForUser(IUser $user): array {
+		$this->setupManager->setupForUser($user);
+		$prefix = "/" . $user->getUID();
+		return array_filter($this->mountManager->getAll(), function (IMountPoint $mount) use ($prefix) {
+			return str_starts_with($mount->getMountPoint(), $prefix);
+		});
 	}
 
 	/**
