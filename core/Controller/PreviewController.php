@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OC\Core\Controller;
 
 use OCA\Files_Sharing\SharedStorage;
-use OCP\AppFramework\Controller;
+use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\FileDisplayResponse;
@@ -41,14 +41,14 @@ use OCP\IPreview;
 use OCP\IRequest;
 use OCP\Preview\IMimeIconProvider;
 
-class PreviewController extends Controller {
+class PreviewController extends ApiController {
 	public function __construct(
-		string $appName,
+    string $appName,
 		IRequest $request,
 		private IPreview $preview,
 		private IRootFolder $root,
 		private ?string $userId,
-		private IMimeIconProvider $mimeIconProvider,
+    private IMimeIconProvider $mimeIconProvider,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -99,6 +99,7 @@ class PreviewController extends Controller {
 	/**
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
+	 * @CORS
 	 *
 	 * Get a preview by file ID
 	 *

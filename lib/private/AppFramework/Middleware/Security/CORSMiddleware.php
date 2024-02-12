@@ -37,6 +37,7 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Middleware;
+use OCP\IConfig;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\Security\Bruteforce\IThrottler;
@@ -49,7 +50,7 @@ use ReflectionMethod;
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
  */
 class CORSMiddleware extends Middleware {
-	/** @var IRequest  */
+	/** @var IRequest */
 	private $request;
 	/** @var ControllerMethodReflector */
 	private $reflector;
@@ -57,15 +58,30 @@ class CORSMiddleware extends Middleware {
 	private $session;
 	/** @var IThrottler */
 	private $throttler;
+	/** @var IConfig */
+	private $config;
+	/** @var string */
+	private $appName;
 
+	/**
+	 * @param IRequest $request
+	 * @param ControllerMethodReflector $reflector
+	 * @param Session $session
+	 * @param Throttler $throttler
+	 * @param string $app_name
+	 */
 	public function __construct(IRequest $request,
 		ControllerMethodReflector $reflector,
 		Session $session,
-		IThrottler $throttler) {
+		Throttler $throttler,
+		IConfig $config,
+		$app_name) {
 		$this->request = $request;
 		$this->reflector = $reflector;
 		$this->session = $session;
 		$this->throttler = $throttler;
+		$this->config = $config;
+		$this->appName = $app_name;
 	}
 
 	/**
@@ -83,8 +99,10 @@ class CORSMiddleware extends Middleware {
 
 		// ensure that @CORS annotated API routes are not used in conjunction
 		// with session authentication since this enables CSRF attack vectors
+		// also Do nothing if HTTP_ORIGIN is not set
 		if ($this->hasAnnotationOrAttribute($reflectionMethod, 'CORS', CORS::class) &&
-			(!$this->hasAnnotationOrAttribute($reflectionMethod, 'PublicPage', PublicPage::class) || $this->session->isLoggedIn())) {
+			(!$this->hasAnnotationOrAttribute($reflectionMethod, 'PublicPage', PublicPage::class) || $this->session->isLoggedIn()) &&
+			isset($this->request->server['HTTP_ORIGIN'])) {
 			$user = array_key_exists('PHP_AUTH_USER', $this->request->server) ? $this->request->server['PHP_AUTH_USER'] : null;
 			$pass = array_key_exists('PHP_AUTH_PW', $this->request->server) ? $this->request->server['PHP_AUTH_PW'] : null;
 
@@ -157,14 +175,16 @@ class CORSMiddleware extends Middleware {
 				}
 
 				$origin = $this->request->server['HTTP_ORIGIN'];
-				$response->addHeader('Access-Control-Allow-Origin', $origin);
+				if ($this->isOriginAllowed($origin, $this->appName)) {
+					$response->addHeader('Access-Control-Allow-Origin', $origin);
+				}
 			}
 		}
 		return $response;
 	}
 
 	/**
-	 * If an SecurityException is being caught return a JSON error response
+	 * If a SecurityException is being caught return a JSON error response
 	 *
 	 * @param Controller $controller the controller that is being called
 	 * @param string $methodName the name of the method that will be called on
@@ -185,5 +205,35 @@ class CORSMiddleware extends Middleware {
 		}
 
 		throw $exception;
+	}
+
+	/**
+	 * Check if origin is allowed.
+	 *
+	 * @param string $origin The origin that will be checked
+	 * @param string $app Optionally, the app that will provide the valid origin list
+	 *
+	 * @return bool
+	 *	 True if origin is in allowed origins list.
+	 */
+	protected function isOriginAllowed($origin, $app = null): bool {
+		// Starting with no allowed origins.
+		$allowed_origins = [];
+		// Add first the general allowed origins if defined
+		$cors_filter_settings_allowed_origins = $this->config->getAppValue('corsOriginFilterSettings', 'allowed_origins', '');
+		$cors_filter_settings_allowed_origins = array_map('trim', explode(",", $cors_filter_settings_allowed_origins));
+		$allowed_origins = [...$allowed_origins, ...$cors_filter_settings_allowed_origins];
+		$allowed_origins = [...$allowed_origins, ...$this->config->getSystemValue('allowed_origins', [])];
+
+		//Then add the app namespace specific allowed origins if defined
+		if ($app !== null) {
+			$cors_filter_settings_app_allowed_origins = $this->config->getAppValue('corsOriginFilterSettings', $app . 'allowed_origins', '');
+			$cors_filter_settings_app_allowed_origins = array_map('trim', explode(",", $cors_filter_settings_app_allowed_origins));
+			$allowed_origins = [...$allowed_origins, ...$cors_filter_settings_app_allowed_origins];
+			$allowed_origins = [...$allowed_origins, ...$this->config->getSystemValue($app . '.allowed_origins', [])];
+		}
+		$allowed_origins = array_map('trim', $allowed_origins);
+
+		return in_array($origin, $allowed_origins, true);
 	}
 }
