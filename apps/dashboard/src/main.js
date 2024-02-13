@@ -20,14 +20,13 @@
  *
  */
 
+// eslint-disable-next-line import/no-unresolved, n/no-missing-import
+import 'vite/modulepreload-polyfill'
+
 import Vue from 'vue'
 import DashboardApp from './DashboardApp.vue'
 import { translate as t } from '@nextcloud/l10n'
 import VTooltip from '@nextcloud/vue/dist/Directives/Tooltip.js'
-import { getRequestToken } from '@nextcloud/auth'
-
-// eslint-disable-next-line camelcase
-__webpack_nonce__ = btoa(getRequestToken())
 
 Vue.directive('Tooltip', VTooltip)
 
