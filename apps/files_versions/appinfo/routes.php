@@ -9,6 +9,7 @@
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Tom Needham <tom@owncloud.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license AGPL-3.0
  *
@@ -27,18 +28,6 @@
  */
 namespace OCA\Files_Versions\AppInfo;
 
-/** @var Application $application */
-$application = \OC::$server->query(Application::class);
-$application->registerRoutes($this, [
-	'routes' => [
-		[
-			'name' => 'Preview#getPreview',
-			'url' => '/preview',
-			'verb' => 'GET',
-		],
-	],
-]);
-
 /** @var $this \OCP\Route\IRouter */
 $this->create('files_versions_download', 'apps/files_versions/download.php')
 	->actionInclude('files_versions/download.php');
@@ -46,3 +35,13 @@ $this->create('files_versions_ajax_getVersions', 'apps/files_versions/ajax/getVe
 	->actionInclude('files_versions/ajax/getVersions.php');
 $this->create('files_versions_ajax_rollbackVersion', 'apps/files_versions/ajax/rollbackVersion.php')
 	->actionInclude('files_versions/ajax/rollbackVersion.php');
+
+return [
+	'routes' => [
+		[
+			'name' => 'Preview#getPreview',
+			'url' => '/preview',
+			'verb' => 'GET',
+		],
+	],
+];

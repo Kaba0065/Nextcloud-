@@ -18,6 +18,7 @@ declare(strict_types=1);
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Victor Dubiniuk <dubiniuk@owncloud.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license AGPL-3.0
  *
@@ -35,11 +36,12 @@ declare(strict_types=1);
  *
  */
 
-use OC\Core\Application;
+/** @var $this OCP\Route\IRouter */
+// Core ajax actions
+$this->create('core_ajax_update', '/core/ajax/update.php')
+	->actionInclude('core/ajax/update.php');
 
-/** @var Application $application */
-$application = \OC::$server->query(Application::class);
-$application->registerRoutes($this, [
+return [
 	'routes' => [
 		['name' => 'lost#email', 'url' => '/lostpassword/email', 'verb' => 'POST'],
 		['name' => 'lost#resetform', 'url' => '/lostpassword/reset/form/{token}/{userId}', 'verb' => 'GET'],
@@ -163,12 +165,4 @@ $application->registerRoutes($this, [
 		['root' => '/text2image', 'name' => 'TextToImageApi#deleteTask', 'url' => '/task/{id}', 'verb' => 'DELETE'],
 		['root' => '/text2image', 'name' => 'TextToImageApi#listTasksByApp', 'url' => '/tasks/app/{appId}', 'verb' => 'GET'],
 	],
-]);
-
-// Post installation check
-
-/** @var $this OCP\Route\IRouter */
-// Core ajax actions
-// Routing
-$this->create('core_ajax_update', '/core/ajax/update.php')
-	->actionInclude('core/ajax/update.php');
+];
