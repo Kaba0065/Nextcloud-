@@ -44,136 +44,168 @@ class Sharing extends Action {
 	 * @param array $params
 	 */
 	public function shared(array $params): void {
-		if ($params['shareType'] === IShare::TYPE_LINK) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared via link with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_USER) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the user "%s" with permissions "%s"  (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_GROUP) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the group "%s" with permissions "%s"  (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_ROOM) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the room "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_EMAIL) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the email recipient "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_CIRCLE) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the circle "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_REMOTE) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the remote user "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_REMOTE_GROUP) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the remote group "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_DECK) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the deck card "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_SCIENCEMESH) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been shared to the ScienceMesh user "%s" with permissions "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'path',
-					'itemSource',
-					'shareWith',
-					'permissions',
-					'id',
-				]
-			);
-		}
+		match ($params['shareType']) {
+			IShare::TYPE_LINK => $this->sharedLinkType($params),
+			IShare::TYPE_USER => $this->sharedUserType($params),
+			IShare::TYPE_GROUP => $this->sharedGroupType($params),
+			IShare::TYPE_ROOM => $this->sharedRoomType($params),
+			IShare::TYPE_EMAIL => $this->sharedEmailType($params),
+			IShare::TYPE_CIRCLE => $this->sharedCircleType($params),
+			IShare::TYPE_REMOTE => $this->sharedRemoteType($params),
+			IShare::TYPE_REMOTE_GROUP => $this->sharedRemoteGroupType($params),
+			IShare::TYPE_DECK => $this->sharedDeckType($params),
+			IShare::TYPE_SCIENCEMESH => $this->sharedSciencemeshType($params),
+			default => null,
+		};
+	}
+
+	protected function sharedLinkType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared via link with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedUserType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the user "%s" with permissions "%s"  (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedGroupType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the group "%s" with permissions "%s"  (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedRoomType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the room "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedEmailType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the email recipient "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedCircleType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the circle "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedRemoteType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the remote user "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedRemoteGroupType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the remote group "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedDeckType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the deck card "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
+	}
+
+	protected function sharedSciencemeshType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been shared to the ScienceMesh user "%s" with permissions "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'path',
+				'itemSource',
+				'shareWith',
+				'permissions',
+				'id',
+			]
+		);
 	}
 
 	/**
@@ -182,126 +214,158 @@ class Sharing extends Action {
 	 * @param array $params
 	 */
 	public function unshare(array $params): void {
-		if ($params['shareType'] === IShare::TYPE_LINK) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_USER) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the user "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_GROUP) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the group "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_ROOM) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the room "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_EMAIL) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the email recipient "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_CIRCLE) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the circle "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_REMOTE) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the remote user "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_REMOTE_GROUP) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the remote group "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_DECK) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the deck card "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		} elseif ($params['shareType'] === IShare::TYPE_SCIENCEMESH) {
-			$this->log(
-				'The %s "%s" with ID "%s" has been unshared from the ScienceMesh user "%s" (Share ID: %s)',
-				$params,
-				[
-					'itemType',
-					'fileTarget',
-					'itemSource',
-					'shareWith',
-					'id',
-				]
-			);
-		}
+		match ($params['shareType']) {
+			IShare::TYPE_LINK => $this->unshareLinkType($params),
+			IShare::TYPE_USER => $this->unshareUserType($params),
+			IShare::TYPE_GROUP => $this->unshareGroupType($params),
+			IShare::TYPE_ROOM => $this->unshareRoomType($params),
+			IShare::TYPE_EMAIL => $this->unshareEmailType($params),
+			IShare::TYPE_CIRCLE => $this->unshareCircleType($params),
+			IShare::TYPE_REMOTE => $this->unshareRemoteType($params),
+			IShare::TYPE_REMOTE_GROUP => $this->unshareRemoteGroupType($params),
+			IShare::TYPE_DECK => $this->unshareDeckType($params),
+			IShare::TYPE_SCIENCEMESH => $this->unshareSciencemeshType($params),
+			default => null,
+		};
+	}
+
+	protected function unshareLinkType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareUserType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the user "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareGroupType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the group "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareRoomType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the room "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareEmailType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the email recipient "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareCircleType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the circle "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareRemoteType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the remote user "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareRemoteGroupType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the remote group "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareDeckType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the deck card "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
+	}
+
+	protected function unshareSciencemeshType(array $params): void {
+		$this->log(
+			'The %s "%s" with ID "%s" has been unshare from the ScienceMesh user "%s" (Share ID: %s)',
+			$params,
+			[
+				'itemType',
+				'fileTarget',
+				'itemSource',
+				'shareWith',
+				'id',
+			]
+		);
 	}
 
 	/**

@@ -31,7 +31,6 @@ namespace OCA\AdminAudit\Actions;
 use OCA\AdminAudit\IAuditLogger;
 
 class Action {
-
 	public function __construct(
 		private IAuditLogger $logger,
 	) {
@@ -50,23 +49,26 @@ class Action {
 		array $elements,
 		bool $obfuscateParameters = false): void {
 		foreach ($elements as $element) {
-			if (!isset($params[$element])) {
-				if ($obfuscateParameters) {
-					$this->logger->critical(
-						'$params["'.$element.'"] was missing.',
-						['app' => 'admin_audit']
-					);
-				} else {
-					$this->logger->critical(
-						sprintf(
-							'$params["'.$element.'"] was missing. Transferred value: %s',
-							print_r($params, true)
-						),
-						['app' => 'admin_audit']
-					);
-				}
-				return;
+			if (isset($params[$element])) {
+				continue;
 			}
+
+			if ($obfuscateParameters) {
+				$this->logger->critical(
+					'$params["'.$element.'"] was missing.',
+					['app' => 'admin_audit']
+				);
+			} else {
+				$this->logger->critical(
+					sprintf(
+						'$params["'.$element.'"] was missing. Transferred value: %s',
+						print_r($params, true)
+					),
+					['app' => 'admin_audit']
+				);
+			}
+
+			return;
 		}
 
 		$replaceArray = [];
