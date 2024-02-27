@@ -51,6 +51,7 @@
 				templateName: t('files', 'New folder'),
 				iconClass: 'icon-folder',
 				fileType: 'folder',
+				actionLabel: t('files', 'Create new folder'),
 				actionHandler: function(name) {
 					self.fileList.createDirectory(name);
 				}
@@ -81,10 +82,18 @@
 			if (action === 'upload') {
 				OC.hideMenus();
 			} else {
-				event.preventDefault();
-				this.$el.find('.menuitem.active').removeClass('active');
-				$target.addClass('active');
-				this._promptFileName($target);
+				var actionItem = _.filter(this._menuItems, function(item) {
+					return item.id === action
+				}).pop();
+				if (typeof actionItem.useInput === 'undefined' || actionItem.useInput === true) {
+					event.preventDefault();
+					this.$el.find('.menuitem.active').removeClass('active');
+					$target.addClass('active');
+					this._promptFileName($target);
+				} else {
+					actionItem.actionHandler();
+					OC.hideMenus();
+				}
 			}
 		},
 
@@ -104,10 +113,12 @@
 
 			var newName = $target.attr('data-templatename');
 			var fileType = $target.attr('data-filetype');
+			var actionLabel = $target.attr('data-action-label');
 			var $form = $(OCA.Files.Templates['newfilemenu_filename_form']({
 				fileName: newName,
 				cid: this.cid,
-				fileType: fileType
+				fileType: fileType,
+				actionLabel,
 			}));
 
 			//this.trigger('actionPerformed', action);
@@ -119,6 +130,11 @@
 
 			var lastPos;
 			var checkInput = function () {
+				// Special handling for the setup template directory
+				if ($target.attr('data-action') === 'template-init') {
+					return true;
+				}
+
 				var filename = $input.val();
 				try {
 					if (!Files.isFileNameValid(filename)) {
@@ -132,9 +148,6 @@
 					}
 				} catch (error) {
 					$input.attr('title', error);
-					$input.tooltip({placement: 'right', trigger: 'manual', 'container': '.newFileMenu'});
-					$input.tooltip('fixTitle');
-					$input.tooltip('show');
 					$input.addClass('error');
 				}
 				return false;
@@ -143,7 +156,6 @@
 			// verify filename on typing
 			$input.keyup(function() {
 				if (checkInput()) {
-					$input.tooltip('hide');
 					$input.removeClass('error');
 				}
 			});
@@ -197,18 +209,36 @@
 				templateName: actionSpec.templateName,
 				iconClass: actionSpec.iconClass,
 				fileType: actionSpec.fileType,
+				useInput: actionSpec.useInput,
+				actionLabel: actionSpec.actionLabel,
 				actionHandler: actionSpec.actionHandler,
-		        });
+				checkFilename: actionSpec.checkFilename,
+				shouldShow: actionSpec.shouldShow,
+			});
+		},
+
+		/**
+		 * Remove a menu item from the "New" file menu
+		 * @param {string} actionId
+		 */
+		removeMenuEntry: function(actionId) {
+			var index = this._menuItems.findIndex(function (actionSpec) {
+				return actionSpec.id === actionId;
+			});
+			if (index > -1) {
+				this._menuItems.splice(index, 1);
+			}
 		},
 
 		/**
 		 * Renders the menu with the currently set items
 		 */
 		render: function() {
+			const menuItems = this._menuItems.filter(item => !item.shouldShow || (item.shouldShow instanceof Function && item.shouldShow() === true))
 			this.$el.html(this.template({
 				uploadMaxHumanFileSize: 'TODO',
 				uploadLabel: t('files', 'Upload file'),
-				items: this._menuItems
+				items: menuItems
 			}));
 
 			// Trigger upload action also with keyboard navigation on enter
@@ -226,7 +256,7 @@
 		 */
 		showAt: function($target) {
 			this.render();
-			OC.showMenu(null, this.$el);
+			OC.showMenu($target, this.$el);
 		}
 	});
 

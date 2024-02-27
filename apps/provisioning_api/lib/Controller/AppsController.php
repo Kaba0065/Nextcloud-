@@ -8,9 +8,9 @@ declare(strict_types=1);
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
  * @author Lukas Reschke <lukas@statuscode.ch>
- * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Tom Needham <tom@owncloud.com>
+ * @author Kate Döen <kate.doeen@nextcloud.com>
  *
  * @license AGPL-3.0
  *
@@ -27,26 +27,25 @@ declare(strict_types=1);
  * along with this program. If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OCA\Provisioning_API\Controller;
 
 use OC_App;
+use OCA\Provisioning_API\ResponseDefinitions;
 use OCP\App\AppPathNotFoundException;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCS\OCSException;
 use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 
+/**
+ * @psalm-import-type Provisioning_APIAppInfo from ResponseDefinitions
+ */
 class AppsController extends OCSController {
-	/** @var \OCP\App\IAppManager */
+	/** @var IAppManager */
 	private $appManager;
 
-	/**
-	 * @param string $appName
-	 * @param IRequest $request
-	 * @param IAppManager $appManager
-	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
@@ -58,16 +57,21 @@ class AppsController extends OCSController {
 	}
 
 	/**
-	 * @param string $filter
-	 * @return DataResponse
+	 * Get a list of installed apps
+	 *
+	 * @param ?string $filter Filter for enabled or disabled apps
+	 * @return DataResponse<Http::STATUS_OK, array{apps: string[]}, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: Installed apps returned
 	 */
-	public function getApps(string $filter = null): DataResponse {
+	public function getApps(?string $filter = null): DataResponse {
 		$apps = (new OC_App())->listAllApps();
 		$list = [];
 		foreach ($apps as $app) {
 			$list[] = $app['id'];
 		}
+		/** @var string[] $list */
 		if ($filter) {
 			switch ($filter) {
 				case 'enabled':
@@ -87,38 +91,52 @@ class AppsController extends OCSController {
 	}
 
 	/**
-	 * @param string $app
-	 * @return DataResponse
+	 * Get the app info for an app
+	 *
+	 * @param string $app ID of the app
+	 * @return DataResponse<Http::STATUS_OK, Provisioning_APIAppInfo, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: App info returned
 	 */
 	public function getAppInfo(string $app): DataResponse {
-		$info = \OCP\App::getAppInfo($app);
+		$info = $this->appManager->getAppInfo($app);
 		if (!is_null($info)) {
-			return new DataResponse(OC_App::getAppInfo($app));
+			return new DataResponse($info);
 		}
 
-		throw new OCSException('The request app was not found', \OCP\API::RESPOND_NOT_FOUND);
+		throw new OCSException('The request app was not found', OCSController::RESPOND_NOT_FOUND);
 	}
 
 	/**
 	 * @PasswordConfirmationRequired
-	 * @param string $app
-	 * @return DataResponse
+	 *
+	 * Enable an app
+	 *
+	 * @param string $app ID of the app
+	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
 	 * @throws OCSException
+	 *
+	 * 200: App enabled successfully
 	 */
 	public function enable(string $app): DataResponse {
 		try {
 			$this->appManager->enableApp($app);
 		} catch (AppPathNotFoundException $e) {
-			throw new OCSException('The request app was not found', \OCP\API::RESPOND_NOT_FOUND);
+			throw new OCSException('The request app was not found', OCSController::RESPOND_NOT_FOUND);
 		}
 		return new DataResponse();
 	}
 
 	/**
 	 * @PasswordConfirmationRequired
-	 * @param string $app
-	 * @return DataResponse
+	 *
+	 * Disable an app
+	 *
+	 * @param string $app ID of the app
+	 * @return DataResponse<Http::STATUS_OK, array<empty>, array{}>
+	 *
+	 * 200: App disabled successfully
 	 */
 	public function disable(string $app): DataResponse {
 		$this->appManager->disableApp($app);

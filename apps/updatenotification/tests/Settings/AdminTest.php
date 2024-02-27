@@ -10,6 +10,7 @@ declare(strict_types=1);
  * @author Julius Härtl <jus@bitgrid.net>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Vincent Petry <vincent@nextcloud.com>
  *
  * @license AGPL-3.0
  *
@@ -26,20 +27,25 @@ declare(strict_types=1);
  * along with this program. If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OCA\UpdateNotification\Tests\Settings;
 
+use OC\User\Backend;
 use OCA\UpdateNotification\Settings\Admin;
 use OCA\UpdateNotification\UpdateChecker;
 use OCP\AppFramework\Http\TemplateResponse;
+use OCP\AppFramework\Services\IInitialState;
 use OCP\IConfig;
 use OCP\IDateTimeFormatter;
 use OCP\IGroup;
 use OCP\IGroupManager;
+use OCP\IUserManager;
 use OCP\L10N\IFactory;
 use OCP\L10N\ILanguageIterator;
 use OCP\Support\Subscription\IRegistry;
+use OCP\User\Backend\ICountUsersBackend;
+use OCP\UserInterface;
 use OCP\Util;
+use Psr\Log\LoggerInterface;
 use Test\TestCase;
 
 class AdminTest extends TestCase {
@@ -57,6 +63,12 @@ class AdminTest extends TestCase {
 	private $dateTimeFormatter;
 	/** @var IRegistry|\PHPUnit\Framework\MockObject\MockObject */
 	private $subscriptionRegistry;
+	/** @var IUserManager|\PHPUnit\Framework\MockObject\MockObject */
+	private $userManager;
+	/** @var LoggerInterface|\PHPUnit\Framework\MockObject\MockObject */
+	private $logger;
+	/** IInitialState|\PHPUnit\Framework\MockObject\MockObject */
+	private $initialState;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -67,13 +79,60 @@ class AdminTest extends TestCase {
 		$this->dateTimeFormatter = $this->createMock(IDateTimeFormatter::class);
 		$this->l10nFactory = $this->createMock(IFactory::class);
 		$this->subscriptionRegistry = $this->createMock(IRegistry::class);
+		$this->userManager = $this->createMock(IUserManager::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
+		$this->initialState = $this->createMock(IInitialState::class);
 
 		$this->admin = new Admin(
-			$this->config, $this->updateChecker, $this->groupManager, $this->dateTimeFormatter, $this->l10nFactory, $this->subscriptionRegistry
+			$this->config,
+			$this->updateChecker,
+			$this->groupManager,
+			$this->dateTimeFormatter,
+			$this->l10nFactory,
+			$this->subscriptionRegistry,
+			$this->userManager,
+			$this->logger,
+			$this->initialState
 		);
 	}
 
 	public function testGetFormWithUpdate() {
+		$backend1 = $this->createMock(CountUsersBackend::class);
+		$backend2 = $this->createMock(CountUsersBackend::class);
+		$backend3 = $this->createMock(CountUsersBackend::class);
+		$backend1
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(false);
+		$backend2
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend3
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend1
+			->expects($this->never())
+			->method('countUsers');
+		$backend2
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(false);
+		$backend3
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(5);
+		$this->userManager
+			->expects($this->once())
+			->method('getBackends')
+			->with()
+			->willReturn([$backend1, $backend2, $backend3]);
 		$channels = [
 			'daily',
 			'beta',
@@ -93,10 +152,11 @@ class AdminTest extends TestCase {
 				['updatenotification', 'notify_groups', '["admin"]', '["admin"]'],
 			]);
 		$this->config
-			->expects($this->once())
 			->method('getSystemValue')
-			->with('updater.server.url', 'https://updates.nextcloud.com/updater_server/')
-			->willReturn('https://updates.nextcloud.com/updater_server/');
+			->willReturnMap([
+				['updater.server.url', 'https://updates.nextcloud.com/updater_server/', 'https://updates.nextcloud.com/updater_server/'],
+				['upgrade.disable-web', false, false],
+			]);
 		$this->dateTimeFormatter
 			->expects($this->once())
 			->method('formatDateTime')
@@ -132,8 +192,9 @@ class AdminTest extends TestCase {
 			->method('delegateHasValidSubscription')
 			->willReturn(true);
 
-		$params = [
-			'json' => json_encode([
+		$this->initialState->expects($this->once())
+			->method('provideInitialState')
+			->with('data', [
 				'isNewVersionAvailable' => true,
 				'isUpdateChecked' => true,
 				'lastChecked' => 'LastCheckedReturnValue',
@@ -143,22 +204,59 @@ class AdminTest extends TestCase {
 				'newVersionString' => 'Nextcloud 8.1.2',
 				'downloadLink' => 'https://downloads.nextcloud.org/server',
 				'changes' => [],
+				'webUpdaterEnabled' => true,
+				'isWebUpdaterRecommended' => true,
 				'updaterEnabled' => true,
 				'versionIsEol' => false,
 				'isDefaultUpdateServerURL' => true,
 				'updateServerURL' => 'https://updates.nextcloud.com/updater_server/',
 				'notifyGroups' => [
-					['value' => 'admin', 'label' => 'Administrators'],
+					['id' => 'admin', 'displayname' => 'Administrators'],
 				],
 				'hasValidSubscription' => true,
-			]),
-		];
+			]);
 
-		$expected = new TemplateResponse('updatenotification', 'admin', $params, '');
+		$expected = new TemplateResponse('updatenotification', 'admin', [], '');
 		$this->assertEquals($expected, $this->admin->getForm());
 	}
 
 	public function testGetFormWithUpdateAndChangedUpdateServer() {
+		$backend1 = $this->createMock(CountUsersBackend::class);
+		$backend2 = $this->createMock(CountUsersBackend::class);
+		$backend3 = $this->createMock(CountUsersBackend::class);
+		$backend1
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(false);
+		$backend2
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend3
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend1
+			->expects($this->never())
+			->method('countUsers');
+		$backend2
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(false);
+		$backend3
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(5);
+		$this->userManager
+			->expects($this->once())
+			->method('getBackends')
+			->with()
+			->willReturn([$backend1, $backend2, $backend3]);
 		$channels = [
 			'daily',
 			'beta',
@@ -178,10 +276,11 @@ class AdminTest extends TestCase {
 				['updatenotification', 'notify_groups', '["admin"]', '["admin"]'],
 			]);
 		$this->config
-			->expects($this->once())
 			->method('getSystemValue')
-			->with('updater.server.url', 'https://updates.nextcloud.com/updater_server/')
-			->willReturn('https://updates.nextcloud.com/updater_server_changed/');
+			->willReturnMap([
+				['updater.server.url', 'https://updates.nextcloud.com/updater_server/', 'https://updates.nextcloud.com/updater_server_changed/'],
+				['upgrade.disable-web', false, true],
+			]);
 		$this->dateTimeFormatter
 			->expects($this->once())
 			->method('formatDateTime')
@@ -217,8 +316,9 @@ class AdminTest extends TestCase {
 			->method('delegateHasValidSubscription')
 			->willReturn(true);
 
-		$params = [
-			'json' => json_encode([
+		$this->initialState->expects($this->once())
+			->method('provideInitialState')
+			->with('data', [
 				'isNewVersionAvailable' => true,
 				'isUpdateChecked' => true,
 				'lastChecked' => 'LastCheckedReturnValue',
@@ -228,22 +328,59 @@ class AdminTest extends TestCase {
 				'newVersionString' => 'Nextcloud 8.1.2',
 				'downloadLink' => 'https://downloads.nextcloud.org/server',
 				'changes' => [],
+				'webUpdaterEnabled' => false,
+				'isWebUpdaterRecommended' => true,
 				'updaterEnabled' => true,
 				'versionIsEol' => false,
 				'isDefaultUpdateServerURL' => false,
 				'updateServerURL' => 'https://updates.nextcloud.com/updater_server_changed/',
 				'notifyGroups' => [
-					['value' => 'admin', 'label' => 'Administrators'],
+					['id' => 'admin', 'displayname' => 'Administrators'],
 				],
 				'hasValidSubscription' => true,
-			]),
-		];
+			]);
 
-		$expected = new TemplateResponse('updatenotification', 'admin', $params, '');
+		$expected = new TemplateResponse('updatenotification', 'admin', [], '');
 		$this->assertEquals($expected, $this->admin->getForm());
 	}
 
 	public function testGetFormWithUpdateAndCustomersUpdateServer() {
+		$backend1 = $this->createMock(CountUsersBackend::class);
+		$backend2 = $this->createMock(CountUsersBackend::class);
+		$backend3 = $this->createMock(CountUsersBackend::class);
+		$backend1
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(false);
+		$backend2
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend3
+			->expects($this->once())
+			->method('implementsActions')
+			->with(Backend::COUNT_USERS)
+			->willReturn(true);
+		$backend1
+			->expects($this->never())
+			->method('countUsers');
+		$backend2
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(false);
+		$backend3
+			->expects($this->once())
+			->method('countUsers')
+			->with()
+			->willReturn(5);
+		$this->userManager
+			->expects($this->once())
+			->method('getBackends')
+			->with()
+			->willReturn([$backend1, $backend2, $backend3]);
 		$channels = [
 			'daily',
 			'beta',
@@ -263,10 +400,11 @@ class AdminTest extends TestCase {
 				['updatenotification', 'notify_groups', '["admin"]', '["admin"]'],
 			]);
 		$this->config
-			->expects($this->once())
 			->method('getSystemValue')
-			->with('updater.server.url', 'https://updates.nextcloud.com/updater_server/')
-			->willReturn('https://updates.nextcloud.com/customers/ABC-DEF/');
+			->willReturnMap([
+				['updater.server.url', 'https://updates.nextcloud.com/updater_server/', 'https://updates.nextcloud.com/customers/ABC-DEF/'],
+				['upgrade.disable-web', false, false],
+			]);
 		$this->dateTimeFormatter
 			->expects($this->once())
 			->method('formatDateTime')
@@ -302,8 +440,9 @@ class AdminTest extends TestCase {
 			->method('delegateHasValidSubscription')
 			->willReturn(true);
 
-		$params = [
-			'json' => json_encode([
+		$this->initialState->expects($this->once())
+			->method('provideInitialState')
+			->with('data', [
 				'isNewVersionAvailable' => true,
 				'isUpdateChecked' => true,
 				'lastChecked' => 'LastCheckedReturnValue',
@@ -313,18 +452,19 @@ class AdminTest extends TestCase {
 				'newVersionString' => 'Nextcloud 8.1.2',
 				'downloadLink' => 'https://downloads.nextcloud.org/server',
 				'changes' => [],
+				'webUpdaterEnabled' => true,
+				'isWebUpdaterRecommended' => true,
 				'updaterEnabled' => true,
 				'versionIsEol' => false,
 				'isDefaultUpdateServerURL' => true,
 				'updateServerURL' => 'https://updates.nextcloud.com/customers/ABC-DEF/',
 				'notifyGroups' => [
-					['value' => 'admin', 'label' => 'Administrators'],
+					['id' => 'admin', 'displayname' => 'Administrators'],
 				],
 				'hasValidSubscription' => true,
-			]),
-		];
+			]);
 
-		$expected = new TemplateResponse('updatenotification', 'admin', $params, '');
+		$expected = new TemplateResponse('updatenotification', 'admin', [], '');
 		$this->assertEquals($expected, $this->admin->getForm());
 	}
 
@@ -410,4 +550,8 @@ class AdminTest extends TestCase {
 		$result = $this->invokePrivate($this->admin, 'filterChanges', [$changes]);
 		$this->assertSame($expectation, $result);
 	}
+}
+
+abstract class CountUsersBackend implements UserInterface, ICountUsersBackend {
+
 }

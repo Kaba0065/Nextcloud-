@@ -22,7 +22,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OCA\DAV\Avatars;
 
 use OCP\IAvatarManager;
@@ -60,8 +59,8 @@ class AvatarHome implements ICollection {
 
 	public function getChild($name) {
 		$elements = pathinfo($name);
-		$ext = isset($elements['extension']) ? $elements['extension'] : '';
-		$size = (int)(isset($elements['filename']) ? $elements['filename'] : '64');
+		$ext = $elements['extension'] ?? '';
+		$size = (int)($elements['filename'] ?? '64');
 		if (!in_array($ext, ['jpeg', 'png'], true)) {
 			throw new MethodNotAllowed('File format not allowed');
 		}
@@ -101,7 +100,7 @@ class AvatarHome implements ICollection {
 	}
 
 	public function getName() {
-		list(,$name) = Uri\split($this->principalInfo['uri']);
+		[,$name] = Uri\split($this->principalInfo['uri']);
 		return $name;
 	}
 

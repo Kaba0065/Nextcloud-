@@ -23,7 +23,6 @@ declare(strict_types=1);
  * along with this program. If not, see <http://www.gnu.org/licenses/>
  *
  */
-
 namespace OCP\Authentication\TwoFactorAuth;
 
 use OCP\IUser;
@@ -33,13 +32,6 @@ use OCP\Template;
  * @since 9.1.0
  */
 interface IProvider {
-
-	/**
-	 * @since 14.0.0
-	 */
-	public const EVENT_SUCCESS = self::class . '::success';
-	public const EVENT_FAILED = self::class . '::failed';
-
 	/**
 	 * Get unique identifier of this 2FA provider
 	 *

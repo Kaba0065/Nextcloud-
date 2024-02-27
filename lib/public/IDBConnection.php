@@ -5,6 +5,7 @@
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Christoph Wurst <christoph@winzerhof-wurst.at>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Ole Ostergaard <ole.c.ostergaard@gmail.com>
  * @author Robin Appelman <robin@icewind.nl>
@@ -27,13 +28,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>
  *
  */
-
-/**
- * Public interface of ownCloud for apps to use.
- * DBConnection interface
- *
- */
-
 // use OCP namespace for all classes that are considered public.
 // This means that they should be used by apps instead of the internal ownCloud classes
 
@@ -51,12 +45,25 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
  * @since 6.0.0
  */
 interface IDBConnection {
-	public const ADD_MISSING_INDEXES_EVENT = self::class . '::ADD_MISSING_INDEXES';
-	public const CHECK_MISSING_INDEXES_EVENT = self::class . '::CHECK_MISSING_INDEXES';
-	public const ADD_MISSING_PRIMARY_KEYS_EVENT = self::class . '::ADD_MISSING_PRIMARY_KEYS';
-	public const CHECK_MISSING_PRIMARY_KEYS_EVENT = self::class . '::CHECK_MISSING_PRIMARY_KEYS';
-	public const ADD_MISSING_COLUMNS_EVENT = self::class . '::ADD_MISSING_COLUMNS';
-	public const CHECK_MISSING_COLUMNS_EVENT = self::class . '::CHECK_MISSING_COLUMNS';
+	/**
+	 * @since 28.0.0
+	 */
+	public const PLATFORM_MYSQL = 'mysql';
+
+	/**
+	 * @since 28.0.0
+	 */
+	public const PLATFORM_ORACLE = 'oracle';
+
+	/**
+	 * @since 28.0.0
+	 */
+	public const PLATFORM_POSTGRES = 'postgres';
+
+	/**
+	 * @since 28.0.0
+	 */
+	public const PLATFORM_SQLITE = 'sqlite';
 
 	/**
 	 * Gets the QueryBuilder for the connection.
@@ -69,11 +76,13 @@ interface IDBConnection {
 	/**
 	 * Used to abstract the ownCloud database access away
 	 * @param string $sql the sql query with ? placeholder for params
-	 * @param int $limit the maximum number of rows
-	 * @param int $offset from which row we want to start
+	 * @param int|null $limit the maximum number of rows
+	 * @param int|null $offset from which row we want to start
 	 * @return IPreparedStatement The prepared statement.
 	 * @since 6.0.0
 	 * @throws Exception since 21.0.0
+	 *
+	 * @psalm-taint-sink sql $sql
 	 */
 	public function prepare($sql, $limit = null, $offset = null): IPreparedStatement;
 
@@ -89,6 +98,8 @@ interface IDBConnection {
 	 * @return IResult The executed statement.
 	 * @since 8.0.0
 	 * @throws Exception since 21.0.0
+	 *
+	 * @psalm-taint-sink sql $sql
 	 */
 	public function executeQuery(string $sql, array $params = [], $types = []): IResult;
 
@@ -106,6 +117,8 @@ interface IDBConnection {
 	 * @throws Exception since 21.0.0
 	 *
 	 * @deprecated 21.0.0 use executeStatement
+	 *
+	 * @psalm-taint-sink sql $sql
 	 */
 	public function executeUpdate(string $sql, array $params = [], array $types = []): int;
 
@@ -121,6 +134,8 @@ interface IDBConnection {
 	 * @return int The number of affected rows.
 	 * @since 21.0.0
 	 * @throws Exception since 21.0.0
+	 *
+	 * @psalm-taint-sink sql $sql
 	 */
 	public function executeStatement($sql, array $params = [], array $types = []): int;
 
@@ -163,7 +178,7 @@ interface IDBConnection {
 	 * @return int number of inserted rows
 	 * @since 16.0.0
 	 */
-	public function insertIgnoreConflict(string $table,array $values) : int;
+	public function insertIgnoreConflict(string $table, array $values) : int;
 
 	/**
 	 * Insert or update a row value
@@ -174,7 +189,7 @@ interface IDBConnection {
 	 * @param array $updatePreconditionValues ensure values match preconditions (column name => value)
 	 * @return int number of new rows
 	 * @throws Exception used to be the removed dbal exception, since 21.0.0 it's \OCP\DB\Exception
-	 * @throws PreconditionNotMetException
+	 * @throws PreConditionNotMetException
 	 * @since 9.0.0
 	 */
 	public function setValues($table, array $keys, array $values, array $updatePreconditionValues = []): int;
@@ -295,6 +310,8 @@ interface IDBConnection {
 	 * @param string $table table name without the prefix
 	 * @throws Exception since 21.0.0
 	 * @since 8.0.0
+	 *
+	 * @psalm-taint-sink sql $table
 	 */
 	public function dropTable(string $table): void;
 
@@ -342,4 +359,12 @@ interface IDBConnection {
 	 * @since 13.0.0
 	 */
 	public function migrateToSchema(Schema $toSchema): void;
+
+	/**
+	 * Returns the database provider name
+	 * @link https://github.com/nextcloud/server/issues/30877
+	 * @since 28.0.0
+	 * @return IDBConnection::PLATFORM_*
+	 */
+	public function getDatabaseProvider(): string;
 }
