@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Dashboard\Controller;
 
 use OCA\Dashboard\ResponseDefinitions;
+use OCA\Dashboard\Service\DashboardService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
@@ -66,7 +67,8 @@ class DashboardApiController extends OCSController {
 		IRequest $request,
 		IManager $dashboardManager,
 		IConfig $config,
-		?string $userId
+		?string $userId,
+		private DashboardService $service,
 	) {
 		parent::__construct($appName, $request);
 
@@ -199,5 +201,57 @@ class DashboardApiController extends OCSController {
 		}, $widgets);
 
 		return new DataResponse($items);
+	}
+
+	/**
+	 * Get the layout
+	 *
+	 * @NoAdminRequired
+	 * @return DataResponse<Http::STATUS_OK, array{layout: list<string>}, array{}>
+	 *
+	 * 200: Layout returned
+	 */
+	public function getLayout(): DataResponse {
+		return new DataResponse(['layout' => $this->service->getLayout()]);
+	}
+
+	/**
+	 * Update the layout
+	 *
+	 * @NoAdminRequired
+	 * @param list<string> $layout The new layout
+	 * @return DataResponse<Http::STATUS_OK, array{layout: list<string>}, array{}>
+	 *
+	 * 200: Statuses updated successfully
+	 */
+	public function updateLayout(array $layout): DataResponse {
+		$this->config->setUserValue($this->userId, 'dashboard', 'layout', implode(',', $layout));
+		return new DataResponse(['layout' => $layout]);
+	}
+
+	/**
+	 * Get the statuses
+	 *
+	 * @NoAdminRequired
+	 * @return DataResponse<Http::STATUS_OK, array{statuses: list<string>}, array{}>
+	 *
+	 * 200: Statuses returned
+	 */
+	public function getStatuses(): DataResponse {
+		return new DataResponse(['statuses' => $this->service->getStatuses()]);
+	}
+
+	/**
+	 * Update the statuses
+	 *
+	 * @NoAdminRequired
+	 * @param list<string> $statuses The new statuses
+	 * @return DataResponse<Http::STATUS_OK, array{statuses: list<string>}, array{}>
+	 *
+	 * 200: Statuses updated successfully
+	 */
+	public function updateStatuses(array $statuses): DataResponse {
+		$this->config->setUserValue($this->userId, 'dashboard', 'statuses', implode(',', $statuses));
+		return new DataResponse(['statuses' => $statuses]);
 	}
 }
