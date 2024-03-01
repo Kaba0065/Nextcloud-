@@ -394,7 +394,7 @@ class UserMountCache implements IUserMountCache {
 		});
 
 		$filteredMounts = array_filter(array_map([$this, 'dbRowToMountInfo'], $filteredMounts));
-		return array_map(function (ICachedMountInfo $mount) use ($internalPath) {
+		$result = array_map(function (ICachedMountInfo $mount) use ($internalPath) {
 			return new CachedMountFileInfo(
 				$mount->getUser(),
 				$mount->getStorageId(),
@@ -406,6 +406,7 @@ class UserMountCache implements IUserMountCache {
 				$internalPath
 			);
 		}, $filteredMounts);
+		return array_values($result);
 	}
 
 	/**
