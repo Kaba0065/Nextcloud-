@@ -180,7 +180,7 @@ class User_LDAP extends BackendUtility implements IUserBackend, UserInterface, I
 	 */
 	public function checkPassword($uid, $password) {
 		$username = $this->loginName2UserName($uid, true);
-		if (!$username) {
+		if ($username === false) {
 			return false;
 		}
 		$dn = $this->access->username2dn($username);
