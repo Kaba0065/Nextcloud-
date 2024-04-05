@@ -66,6 +66,11 @@ class Info extends Base {
 			return 1;
 		}
 		$groups = $this->groupManager->getUserGroupIds($user);
+		if ($user->getLastLogin() == 0) {
+			$lastseen = "never";
+		} else {
+			$lastseen = date('Y-m-d H:i:s T', $user->getLastLogin());
+		}
 		$data = [
 			'user_id' => $user->getUID(),
 			'display_name' => $user->getDisplayName(),
@@ -75,7 +80,7 @@ class Info extends Base {
 			'groups' => $groups,
 			'quota' => $user->getQuota(),
 			'storage' => $this->getStorageInfo($user),
-			'last_seen' => date('Y-m-d H:i:s T', $user->getLastLogin()),
+			'last_seen' => $lastseen,
 			'user_directory' => $user->getHome(),
 			'backend' => $user->getBackendClassName()
 		];
