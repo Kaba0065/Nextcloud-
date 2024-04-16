@@ -137,7 +137,6 @@ class Connection extends PrimaryReadReplicaConnection {
 		try {
 			if ($this->_conn) {
 				$this->reconnectIfNeeded();
-				/** @psalm-suppress InternalMethod */
 				return parent::connect();
 			}
 
@@ -146,7 +145,6 @@ class Connection extends PrimaryReadReplicaConnection {
 			// Only trigger the event logger for the initial connect call
 			$eventLogger = Server::get(IEventLogger::class);
 			$eventLogger->start('connect:db', 'db connection opened');
-			/** @psalm-suppress InternalMethod */
 			$status = parent::connect();
 			$eventLogger->end('connect:db');
 
