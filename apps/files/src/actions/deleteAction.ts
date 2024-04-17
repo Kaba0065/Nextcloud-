@@ -140,14 +140,29 @@ export const action = new FileAction({
 			.every(permission => (permission & Permission.DELETE) !== 0)
 	},
 
-	async exec(node: Node) {
+	async exec(node: Node, view: View, dir: string) {
 		try {
 			await axios.delete(node.encodedSource)
 
 			// Let's delete even if it's moved to the trashbin
 			// since it has been removed from the current view
-			//  and changing the view will trigger a reload anyway.
+			// and changing the view will trigger a reload anyway.
 			emit('files:node:deleted', node)
+
+			// If we remove the currently open file (sidebar),
+			// then we need to reset the current file id to the parent directory of that node
+			if (node.fileid && window.OCP.Files.Router.params?.fileid === node.fileid) {
+				// We can not access the paths store here because the action is loaded in a different chunk and webpack does not use the same pinia
+				const fileid = (await view.getContents(dir)).folder.fileid
+				// Update the route silently (only change fileid - not triggering a reload)
+				window.OCP.Files.Router.goToRoute(
+					null,
+					{ view: view.id, fileid },
+					{ dir },
+					true,
+				)
+			}
+
 			return true
 		} catch (error) {
 			logger.error('Error while deleting a file', { error, source: node.source, node })

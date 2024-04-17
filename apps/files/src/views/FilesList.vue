@@ -212,7 +212,7 @@ export default defineComponent({
 		return {
 			filterText: '',
 			loading: true,
-			promise: null,
+			promise: null as Promise<ContentsWithRoot>|null,
 			Type,
 
 			_unsubscribeStore: () => {},
