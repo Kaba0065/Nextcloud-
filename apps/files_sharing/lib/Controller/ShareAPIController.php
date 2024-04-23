@@ -614,6 +614,13 @@ class ShareAPIController extends OCSController {
 		$share->setNode($node);
 
 		try {
+			$expireDate = $expireDate !== '' ? $this->parseDate($expireDate) : null;
+				$share->setExpirationDate($expireDate);
+		} catch (\Exception $e) {
+				throw new OCSNotFoundException($this->l->t('Invalid date, date format must be YYYY-MM-DD'));
+		}
+	
+		try {
 			$this->lock($share->getNode());
 		} catch (LockedException $e) {
 			throw new OCSNotFoundException($this->l->t('Could not create share'));
