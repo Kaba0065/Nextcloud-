@@ -560,6 +560,9 @@ span.usersLastLoginTooltip {
 
 /* SETTINGS SECTIONS */
 .section {
+	padding: 0 0 calc(var(--default-grid-baseline) * 5) 0;
+	margin: calc(var(--default-grid-baseline) * 7);
+	width: min(900px, 100%);
 	margin-bottom: 0;
 	/* section divider lines, none needed for last one */
 	&:not(:last-child) {
