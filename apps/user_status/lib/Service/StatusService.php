@@ -543,18 +543,8 @@ class StatusService {
 		$backupUserStatus->setIsBackup(false);
 		// Remove the underscore prefix added when creating the backup
 		$backupUserStatus->setUserId(substr($backupUserStatus->getUserId(), 1));
-		try {
-			$this->mapper->update($backupUserStatus);
-		} catch (Exception $e) {
-			if ($e->getReason() === Exception::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
-				// A different process might have written another status
-				// update to the DB while we're processing our stuff.
-				// We cannot safely restore the status as we don't know which one is valid at this point
-				// So let's silently log this one and exit
-				$this->logger->debug('Unique constraint violation for live user status', ['exception' => $e]);
-				return null;
-			}
-		}
+		$this->mapper->update($backupUserStatus);
+
 		return $backupUserStatus;
 	}
 
