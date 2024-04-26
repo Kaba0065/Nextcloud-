@@ -144,6 +144,9 @@ class Router implements IRouter {
 			if (isset($this->loadedApps[$app])) {
 				return;
 			}
+			if (!in_array($app, \OC_App::getEnabledApps())) {
+				return;
+			}
 			$appPath = \OC_App::getAppPath($app);
 			$file = $appPath . '/appinfo/routes.php';
 			if ($appPath !== false && file_exists($file)) {
