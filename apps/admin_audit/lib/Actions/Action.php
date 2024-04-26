@@ -87,4 +87,12 @@ class Action {
 			]
 		);
 	}
+
+	/**
+	 * Log a error message with a log level of error
+	 * @param string $text
+	 */
+	public function error(string $text): void {
+		$this->logger->error($text, ['app' => 'admin_audit']);
+	}
 }
