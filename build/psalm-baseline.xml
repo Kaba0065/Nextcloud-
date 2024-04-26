@@ -1318,20 +1318,10 @@
       <code>$arguments</code>
     </ParamNameMismatch>
   </file>
-  <file src="core/Command/App/Install.php">
-    <TypeDoesNotContainType>
-      <code>$result === false</code>
-    </TypeDoesNotContainType>
-  </file>
   <file src="core/Command/App/ListApps.php">
     <LessSpecificImplementedReturnType>
       <code>array</code>
     </LessSpecificImplementedReturnType>
-  </file>
-  <file src="core/Command/App/Update.php">
-    <RedundantCondition>
-      <code>$result === true</code>
-    </RedundantCondition>
   </file>
   <file src="core/Command/Config/Import.php">
     <InvalidScalarArgument>
