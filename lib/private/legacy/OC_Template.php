@@ -306,6 +306,7 @@ class OC_Template extends \OC\Template\Base {
 		http_response_code($statusCode);
 		try {
 			$debug = \OC::$server->getSystemConfig()->getValue('debug', false);
+			// get link for docs on how to retreive the nextcloud log
 			$request = \OC::$server->getRequest();
 			$content = new \OC_Template('', 'exception', 'error', false);
 			$content->assign('errorClass', get_class($exception));
