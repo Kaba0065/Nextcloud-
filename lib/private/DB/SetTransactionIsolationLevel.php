@@ -39,11 +39,9 @@ class SetTransactionIsolationLevel implements EventSubscriber {
 	 */
 	public function postConnect(ConnectionEventArgs $args) {
 		$connection = $args->getConnection();
-		if ($connection instanceof PrimaryReadReplicaConnection && $connection->isConnectedToPrimary()) {
-			$connection->setTransactionIsolation(TransactionIsolationLevel::READ_COMMITTED);
-			if ($connection->getDatabasePlatform() instanceof MySQLPlatform) {
-				$connection->executeStatement('SET SESSION AUTOCOMMIT=1');
-			}
+		$connection->setTransactionIsolation(TransactionIsolationLevel::READ_COMMITTED);
+		if ($connection->getDatabasePlatform() instanceof MySQLPlatform) {
+			$connection->executeStatement('SET SESSION AUTOCOMMIT=1');
 		}
 	}
 
