@@ -331,7 +331,6 @@ class IMipPluginTest extends TestCase {
 		$this->assertEquals('1.0', $message->getScheduleStatus());
 	}
 
-
 	public function testParsingRecurrence(): void {
 		$message = new Message();
 		$message->method = 'REQUEST';
